@@ -2,7 +2,15 @@
 
 ## Strategy retained
 
-The prototype uses an explicit R-side call inside `gradethis::grade_this()`
+The prototype uses two R-side strategies.
+
+For `learnr` multiple-choice questions, it uses `tracked_question_radio()` or
+`tracked_question_checkbox()`. These wrappers create normal `learnr` questions
+and add a small custom S3 class. When `learnr::question_is_correct()` evaluates
+the submitted value, `learnrTrackR` records the submission and then returns the
+usual `learnr` result.
+
+For code exercises, it uses an explicit call inside `gradethis::grade_this()`
 check chunks:
 
 ```r
@@ -18,17 +26,19 @@ learnrTrackR::track_gradethis_attempt(
 )
 ```
 
-This is the least fragile strategy for the first prototype because `grade_this()`
-documents `.user_code` and `.result` as available objects in the checking
-environment. The helper records the attempt and returns a `gradethis` graded
-result for the learner.
+This is a low-fragility first strategy because it uses public R-side extension
+points documented by the installed packages: `learnr::question_is_correct()`
+for questions, and `.user_code` plus `.result` inside `gradethis::grade_this()`
+for code exercises. The helpers record attempts and return the usual `learnr`
+or `gradethis` result for the learner.
 
 ## What is tracked
 
 - Student identifier from `LEARNRTRACKR_STUDENT_ID`.
 - Tutorial identifier.
 - Question identifier.
-- Submitted code from `.user_code`.
+- Submitted choices for tracked radio and checkbox questions.
+- Submitted code from `.user_code` for tracked code exercises.
 - Correct or incorrect status.
 - Score and maximum score.
 - Feedback message.
@@ -36,7 +46,7 @@ result for the learner.
 
 ## What is not tracked yet
 
-- Multiple-choice submissions from `learnr::question()`.
+- Free-text and numeric `learnr` questions.
 - Browser events.
 - Shiny session metadata.
 - Authenticated student identity.
@@ -44,8 +54,6 @@ result for the learner.
 
 ## Next technical question
 
-The next investigation should focus on whether multiple-choice questions can be
-tracked through a public and stable `learnr` extension point. If not, the
-package should keep code exercises as the first supported integration and defer
-quiz widgets until a robust Shiny or JavaScript strategy is documented and
-tested.
+The next investigation should focus on extending the same question wrapper
+pattern to free-text and numeric `learnr` questions, then deciding whether the
+package should expose a single generic `tracked_question()` helper.

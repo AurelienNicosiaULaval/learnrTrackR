@@ -110,3 +110,214 @@ track_gradethis_attempt <- function(con,
     message = feedback
   )
 }
+
+validate_learnr_tracking_config <- function(student_id,
+                                            tutorial_id,
+                                            question_id,
+                                            db_path,
+                                            max_score) {
+  list(
+    student_id = validate_scalar_character(student_id, arg = "student_id"),
+    tutorial_id = validate_scalar_character(tutorial_id, arg = "tutorial_id"),
+    question_id = validate_scalar_character(question_id, arg = "question_id"),
+    db_path = validate_path(db_path, arg = "db_path"),
+    max_score = validate_scalar_numeric(max_score, arg = "max_score")
+  )
+}
+
+add_tracked_question_class <- function(question, class_name, tracking) {
+  question$options$learnrTrackR <- tracking
+  class(question) <- c(class_name, class(question))
+  question
+}
+
+#' Create a tracked learnr radio question
+#'
+#' Wraps [learnr::question_radio()] and records each submitted answer in a
+#' `learnrTrackR` SQLite database when `learnr` evaluates the question. This
+#' function is intended for small prototypes and local teaching workflows.
+#'
+#' The tracking implementation uses the public `learnr::question_is_correct()`
+#' S3 extension point. It does not use browser JavaScript interception.
+#'
+#' @param text Question text passed to [learnr::question_radio()].
+#' @param ... Answers created with [learnr::answer()], followed by optional
+#'   arguments passed to [learnr::question_radio()].
+#' @param question_id Question identifier stored in the tracking database.
+#' @param tutorial_id Tutorial identifier stored in the tracking database.
+#' @param student_id Student identifier stored in the tracking database.
+#' @param db_path Path to the SQLite tracking database.
+#' @param max_score Maximum score stored for the question. Defaults to `1`.
+#'
+#' @return A `learnr` radio question object with tracking metadata.
+#' @export
+#'
+#' @examples
+#' if (requireNamespace("learnr", quietly = TRUE)) {
+#'   db_path <- tempfile(fileext = ".sqlite")
+#'   question <- tracked_question_radio(
+#'     "What is 2 + 2?",
+#'     learnr::answer("3"),
+#'     learnr::answer("4", correct = TRUE),
+#'     question_id = "q1",
+#'     tutorial_id = "module_01",
+#'     student_id = "student_001",
+#'     db_path = db_path
+#'   )
+#' }
+tracked_question_radio <- function(text,
+                                   ...,
+                                   question_id,
+                                   tutorial_id,
+                                   student_id,
+                                   db_path,
+                                   max_score = 1) {
+  if (!requireNamespace("learnr", quietly = TRUE)) {
+    cli::cli_abort(
+      "Package {.pkg learnr} is required to use {.fn tracked_question_radio}."
+    )
+  }
+
+  tracking <- validate_learnr_tracking_config(
+    student_id = student_id,
+    tutorial_id = tutorial_id,
+    question_id = question_id,
+    db_path = db_path,
+    max_score = max_score
+  )
+
+  question <- learnr::question_radio(text, ...)
+
+  add_tracked_question_class(
+    question = question,
+    class_name = "learnrTrackR_tracked_radio",
+    tracking = tracking
+  )
+}
+
+#' Create a tracked learnr checkbox question
+#'
+#' Wraps [learnr::question_checkbox()] and records each submitted answer in a
+#' `learnrTrackR` SQLite database when `learnr` evaluates the question.
+#'
+#' The tracking implementation uses the public `learnr::question_is_correct()`
+#' S3 extension point. It does not use browser JavaScript interception.
+#'
+#' @param text Question text passed to [learnr::question_checkbox()].
+#' @param ... Answers created with [learnr::answer()] or [learnr::answer_fn()],
+#'   followed by optional arguments passed to [learnr::question_checkbox()].
+#' @param question_id Question identifier stored in the tracking database.
+#' @param tutorial_id Tutorial identifier stored in the tracking database.
+#' @param student_id Student identifier stored in the tracking database.
+#' @param db_path Path to the SQLite tracking database.
+#' @param max_score Maximum score stored for the question. Defaults to `1`.
+#'
+#' @return A `learnr` checkbox question object with tracking metadata.
+#' @export
+#'
+#' @examples
+#' if (requireNamespace("learnr", quietly = TRUE)) {
+#'   db_path <- tempfile(fileext = ".sqlite")
+#'   question <- tracked_question_checkbox(
+#'     "Select all even numbers.",
+#'     learnr::answer("2", correct = TRUE),
+#'     learnr::answer("3"),
+#'     learnr::answer("4", correct = TRUE),
+#'     question_id = "q1",
+#'     tutorial_id = "module_01",
+#'     student_id = "student_001",
+#'     db_path = db_path
+#'   )
+#' }
+tracked_question_checkbox <- function(text,
+                                      ...,
+                                      question_id,
+                                      tutorial_id,
+                                      student_id,
+                                      db_path,
+                                      max_score = 1) {
+  if (!requireNamespace("learnr", quietly = TRUE)) {
+    cli::cli_abort(
+      "Package {.pkg learnr} is required to use {.fn tracked_question_checkbox}."
+    )
+  }
+
+  tracking <- validate_learnr_tracking_config(
+    student_id = student_id,
+    tutorial_id = tutorial_id,
+    question_id = question_id,
+    db_path = db_path,
+    max_score = max_score
+  )
+
+  question <- learnr::question_checkbox(text, ...)
+
+  add_tracked_question_class(
+    question = question,
+    class_name = "learnrTrackR_tracked_checkbox",
+    tracking = tracking
+  )
+}
+
+serialize_learnr_submission <- function(value) {
+  if (is.null(value) || length(value) == 0) {
+    return("")
+  }
+
+  paste(as.character(value), collapse = "\n")
+}
+
+feedback_from_learnr_result <- function(result) {
+  messages <- result$messages
+
+  if (is.null(messages) || length(messages) == 0) {
+    return(if (isTRUE(result$correct)) "Correct." else "Incorrect.")
+  }
+
+  paste(as.character(messages), collapse = "\n")
+}
+
+track_learnr_question_result <- function(question, value, result) {
+  tracking <- question$options$learnrTrackR
+
+  if (is.null(tracking)) {
+    cli::cli_abort("The question does not contain learnrTrackR metadata.")
+  }
+
+  con <- init_tracking_db(tracking$db_path, overwrite = FALSE)
+  on.exit(DBI::dbDisconnect(con), add = TRUE)
+
+  correct <- isTRUE(result$correct)
+
+  track_attempt(
+    con = con,
+    student_id = tracking$student_id,
+    tutorial_id = tracking$tutorial_id,
+    question_id = tracking$question_id,
+    submitted_answer = serialize_learnr_submission(value),
+    grade_status = if (correct) "correct" else "incorrect",
+    score = if (correct) tracking$max_score else 0,
+    max_score = tracking$max_score,
+    feedback = feedback_from_learnr_result(result)
+  )
+
+  invisible(result)
+}
+
+#' @exportS3Method learnr::question_is_correct
+question_is_correct.learnrTrackR_tracked_radio <- function(question,
+                                                          value,
+                                                          ...) {
+  result <- NextMethod()
+  track_learnr_question_result(question, value, result)
+  result
+}
+
+#' @exportS3Method learnr::question_is_correct
+question_is_correct.learnrTrackR_tracked_checkbox <- function(question,
+                                                             value,
+                                                             ...) {
+  result <- NextMethod()
+  track_learnr_question_result(question, value, result)
+  result
+}

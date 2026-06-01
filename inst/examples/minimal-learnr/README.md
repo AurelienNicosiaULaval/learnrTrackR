@@ -2,10 +2,14 @@
 
 This directory contains a minimal `learnr` prototype for `learnrTrackR`.
 
-It uses the safest first integration strategy: explicit calls to
-`learnrTrackR::track_gradethis_attempt()` inside `gradethis::grade_this()`
-check chunks. This records code exercise submissions without relying on
-internal `learnr` JavaScript or Shiny implementation details.
+It uses two explicit tracking strategies:
+
+- `learnrTrackR::tracked_question_radio()` for the multiple-choice question.
+- `learnrTrackR::track_gradethis_attempt()` inside `gradethis::grade_this()`
+  check chunks for code exercises.
+
+Both strategies avoid relying on internal `learnr` JavaScript implementation
+details.
 
 ## Run the tutorial
 
@@ -46,7 +50,6 @@ source("inst/examples/minimal-learnr/inspect-results.R")
 
 ## Current limitation
 
-The multiple-choice question is included to keep the tutorial structure close
-to the target use case, but it is not tracked by this helper. The helper is
-called from `gradethis::grade_this()` check chunks, and the multiple-choice
-question is not a code exercise with a `*-check` chunk.
+This prototype tracks radio-button and checkbox-style questions through custom
+`learnr` question classes. It does not yet track free-text or numeric `learnr`
+questions, although the same pattern can be extended to those question types.

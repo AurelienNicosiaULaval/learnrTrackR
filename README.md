@@ -29,8 +29,8 @@ store simulated attempts and export results for inspection.
 - Compute simple scores using first, last, or best attempt rules.
 - Export attempts or scores to CSV.
 - Provide a minimal example and unit tests.
-- Provide a minimal `learnr` and `gradethis` prototype for tracked code
-  exercises.
+- Provide a minimal `learnr` and `gradethis` prototype for tracked
+  multiple-choice questions and code exercises.
 
 ## What the MVP does not do yet
 
@@ -107,9 +107,10 @@ DBI::dbDisconnect(con)
 ## Minimal learnr prototype
 
 The directory `inst/examples/minimal-learnr/` contains a small tutorial with one
-multiple-choice question and two tracked code exercises. The tracked exercises
-use explicit calls to `track_gradethis_attempt()` inside `gradethis::grade_this()`
-check chunks.
+tracked multiple-choice question and two tracked code exercises. The
+multiple-choice question uses `tracked_question_radio()`. The code exercises
+use explicit calls to `track_gradethis_attempt()` inside
+`gradethis::grade_this()` check chunks.
 
 From the package source directory, install the package locally first:
 
@@ -138,5 +139,6 @@ After submitting the code exercises:
 source("inst/examples/minimal-learnr/inspect-results.R")
 ```
 
-The multiple-choice question is intentionally documented as not tracked by this
-first helper. It is present to define the next technical problem clearly.
+Radio-button and checkbox questions can be tracked with
+`tracked_question_radio()` and `tracked_question_checkbox()`. Text and numeric
+questions are not wrapped yet.

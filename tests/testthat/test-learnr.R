@@ -61,3 +61,93 @@ test_that("track_gradethis_attempt works inside grade_this", {
   expect_equal(nrow(attempts), 1)
   expect_equal(attempts$submitted_answer, "2 + 2")
 })
+
+test_that("tracked_question_radio records radio submissions", {
+  skip_if_not_installed("learnr")
+
+  db_path <- withr::local_tempfile(fileext = ".sqlite")
+
+  question <- tracked_question_radio(
+    "What is 2 + 2?",
+    learnr::answer("3"),
+    learnr::answer("4", correct = TRUE, message = "Correct."),
+    question_id = "q1_radio",
+    tutorial_id = "minimal_learnr",
+    student_id = "student_001",
+    db_path = db_path,
+    max_score = 1
+  )
+
+  result <- learnr::question_is_correct(question, "4")
+
+  con <- connect_tracking_db(db_path)
+  withr::defer(DBI::dbDisconnect(con))
+  attempts <- get_attempts(con)
+
+  expect_true(result$correct)
+  expect_equal(nrow(attempts), 1)
+  expect_equal(attempts$question_id, "q1_radio")
+  expect_equal(attempts$submitted_answer, "4")
+  expect_equal(attempts$grade_status, "correct")
+  expect_equal(attempts$score, 1)
+})
+
+test_that("tracked_question_radio records incorrect radio submissions", {
+  skip_if_not_installed("learnr")
+
+  db_path <- withr::local_tempfile(fileext = ".sqlite")
+
+  question <- tracked_question_radio(
+    "What is 2 + 2?",
+    learnr::answer("3", message = "Too low."),
+    learnr::answer("4", correct = TRUE),
+    question_id = "q1_radio",
+    tutorial_id = "minimal_learnr",
+    student_id = "student_001",
+    db_path = db_path,
+    max_score = 1
+  )
+
+  result <- learnr::question_is_correct(question, "3")
+
+  con <- connect_tracking_db(db_path)
+  withr::defer(DBI::dbDisconnect(con))
+  attempts <- get_attempts(con)
+
+  expect_false(result$correct)
+  expect_equal(nrow(attempts), 1)
+  expect_equal(attempts$submitted_answer, "3")
+  expect_equal(attempts$grade_status, "incorrect")
+  expect_equal(attempts$score, 0)
+})
+
+test_that("tracked_question_checkbox records multiple selections", {
+  skip_if_not_installed("learnr")
+
+  db_path <- withr::local_tempfile(fileext = ".sqlite")
+
+  question <- tracked_question_checkbox(
+    "Select all even numbers.",
+    learnr::answer("2", correct = TRUE),
+    learnr::answer("3"),
+    learnr::answer("4", correct = TRUE),
+    question_id = "q2_checkbox",
+    tutorial_id = "minimal_learnr",
+    student_id = "student_001",
+    db_path = db_path,
+    max_score = 2
+  )
+
+  result <- learnr::question_is_correct(question, c("2", "4"))
+
+  con <- connect_tracking_db(db_path)
+  withr::defer(DBI::dbDisconnect(con))
+  attempts <- get_attempts(con)
+
+  expect_true(result$correct)
+  expect_equal(nrow(attempts), 1)
+  expect_equal(attempts$question_id, "q2_checkbox")
+  expect_equal(attempts$submitted_answer, "2\n4")
+  expect_equal(attempts$score, 2)
+  expect_equal(attempts$max_score, 2)
+})

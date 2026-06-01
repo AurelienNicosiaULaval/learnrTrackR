@@ -54,19 +54,24 @@ tibble::tibble(
 
 ## Question 1
 
-This multiple-choice question is included as a target use case. In this minimal
-prototype, it is not tracked because the current helper is called from
-`gradethis::grade_this()` check chunks.
+This multiple-choice question is tracked with
+`learnrTrackR::tracked_question_radio()`. The function keeps the usual `learnr`
+radio-button interface and records the submitted choice when `learnr` evaluates
+the answer.
 
 ```{r q1_multiple_choice, echo=FALSE}
-learnr::question(
+learnrTrackR::tracked_question_radio(
   "What is the mean of 2, 4, and 6?",
   learnr::answer("3"),
-  learnr::answer("4", correct = TRUE),
+  learnr::answer("4", correct = TRUE, message = "Correct."),
   learnr::answer("6"),
   allow_retry = TRUE,
-  correct = "Correct.",
-  incorrect = "Try again. Add the three values and divide by 3."
+  try_again = "Try again. Add the three values and divide by 3.",
+  question_id = "q1_multiple_choice",
+  tutorial_id = tutorial_id,
+  student_id = student_id,
+  db_path = tracking_db_path,
+  max_score = 1
 )
 ```
 

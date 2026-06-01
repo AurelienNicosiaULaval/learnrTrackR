@@ -7,3 +7,4 @@
 - Added CSV export.
 - Added a minimal `learnr` and `gradethis` prototype for tracked code
   exercises.
+- Added tracked radio-button and checkbox `learnr` question helpers.
