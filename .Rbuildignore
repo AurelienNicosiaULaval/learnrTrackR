@@ -1,6 +1,9 @@
 ^\.Rproj\.user$
 ^\.git$
+^\.git/
 ^\.gitignore$
+^\.DS_Store$
+^.*\.DS_Store$
 ^LICENSE\.md$
 ^learnrTrackR\.Rcheck$
 ^plan_learnrTrackR\.md$

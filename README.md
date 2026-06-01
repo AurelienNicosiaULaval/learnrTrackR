@@ -29,6 +29,8 @@ store simulated attempts and export results for inspection.
 - Compute simple scores using first, last, or best attempt rules.
 - Export attempts or scores to CSV.
 - Provide a minimal example and unit tests.
+- Provide a minimal `learnr` and `gradethis` prototype for tracked code
+  exercises.
 
 ## What the MVP does not do yet
 
@@ -97,7 +99,44 @@ DBI::dbDisconnect(con)
 ## Short roadmap
 
 1. Validate the SQLite storage layer with simulated attempts.
-2. Add a minimal `learnr` tutorial integration prototype.
+2. Expand the minimal `learnr` tutorial integration prototype.
 3. Add stronger student identification workflows.
 4. Add richer gradebook and Moodle-oriented exports.
 5. Add an instructor dashboard after the storage layer is stable.
+
+## Minimal learnr prototype
+
+The directory `inst/examples/minimal-learnr/` contains a small tutorial with one
+multiple-choice question and two tracked code exercises. The tracked exercises
+use explicit calls to `track_gradethis_attempt()` inside `gradethis::grade_this()`
+check chunks.
+
+From the package source directory, install the package locally first:
+
+```r
+devtools::install(dependencies = FALSE)
+```
+
+Then run the tutorial:
+
+```r
+Sys.setenv(
+  LEARNRTRACKR_DB = file.path(tempdir(), "learnrtrackr-minimal.sqlite"),
+  LEARNRTRACKR_STUDENT_ID = "student_demo"
+)
+
+learnr::run_tutorial(
+  "inst/examples/minimal-learnr/tutorial.Rmd",
+  clean = TRUE,
+  as_rstudio_job = FALSE
+)
+```
+
+After submitting the code exercises:
+
+```r
+source("inst/examples/minimal-learnr/inspect-results.R")
+```
+
+The multiple-choice question is intentionally documented as not tracked by this
+first helper. It is present to define the next technical problem clearly.

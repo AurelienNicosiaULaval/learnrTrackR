@@ -20,7 +20,9 @@ Imports:
     RSQLite,
     tibble
 Suggests:
+    gradethis,
     knitr,
+    learnr,
     rmarkdown,
     testthat (>= 3.0.0),
     withr

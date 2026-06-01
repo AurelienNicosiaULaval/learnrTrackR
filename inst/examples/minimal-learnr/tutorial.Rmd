@@ -1,0 +1,178 @@
+---
+title: "Minimal tracked learnr tutorial"
+output:
+  learnr::tutorial:
+    progressive: true
+    allow_skip: true
+runtime: shiny_prerendered
+description: "A minimal learnr tutorial showing explicit learnrTrackR tracking in gradethis check chunks."
+---
+
+```{r setup, include=FALSE}
+library(learnr)
+library(gradethis)
+library(learnrTrackR)
+library(dplyr)
+library(tibble)
+
+gradethis_setup()
+knitr::opts_chunk$set(echo = FALSE)
+
+tutorial_id <- "minimal_learnr"
+student_id <- Sys.getenv("LEARNRTRACKR_STUDENT_ID", unset = "student_demo")
+tracking_db_path <- Sys.getenv(
+  "LEARNRTRACKR_DB",
+  unset = file.path(tempdir(), "learnrtrackr-minimal.sqlite")
+)
+
+open_tracking_db <- function() {
+  learnrTrackR::init_tracking_db(tracking_db_path, overwrite = FALSE)
+}
+
+quebec_temperatures <- tibble::tibble(
+  station = c("Québec", "Québec", "Québec", "Montréal", "Montréal", "Montréal"),
+  day = as.Date(c(
+    "2026-01-01", "2026-01-02", "2026-01-03",
+    "2026-01-01", "2026-01-02", "2026-01-03"
+  )),
+  temp_c = c(-9, -6, -8, -5, -3, -7)
+)
+```
+
+## Identification
+
+For this prototype, the learner is identified by the environment variable
+`LEARNRTRACKR_STUDENT_ID`.
+
+```{r show-student}
+tibble::tibble(
+  student_id = student_id,
+  tutorial_id = tutorial_id,
+  tracking_db_path = tracking_db_path
+)
+```
+
+## Question 1
+
+This multiple-choice question is included as a target use case. In this minimal
+prototype, it is not tracked because the current helper is called from
+`gradethis::grade_this()` check chunks.
+
+```{r q1_multiple_choice, echo=FALSE}
+learnr::question(
+  "What is the mean of 2, 4, and 6?",
+  learnr::answer("3"),
+  learnr::answer("4", correct = TRUE),
+  learnr::answer("6"),
+  allow_retry = TRUE,
+  correct = "Correct.",
+  incorrect = "Try again. Add the three values and divide by 3."
+)
+```
+
+## Question 2
+
+Use `mean()` to compute the mean temperature in the small data set.
+
+```{r show-data}
+quebec_temperatures
+```
+
+```{r q2_mean_temperature, exercise=TRUE}
+mean(quebec_temperatures$temp_c)
+```
+
+```{r q2_mean_temperature-solution}
+mean(quebec_temperatures$temp_c)
+```
+
+```{r q2_mean_temperature-check}
+gradethis::grade_this({
+  expected <- mean(quebec_temperatures$temp_c)
+  correct <- isTRUE(all.equal(.result, expected))
+  feedback <- if (correct) {
+    "Correct. This is the mean of the temperature column."
+  } else {
+    "Try again. Use mean() on quebec_temperatures$temp_c."
+  }
+
+  con <- open_tracking_db()
+  on.exit(DBI::dbDisconnect(con), add = TRUE)
+
+  learnrTrackR::track_gradethis_attempt(
+    con = con,
+    student_id = student_id,
+    tutorial_id = tutorial_id,
+    question_id = "q2_mean_temperature",
+    submitted_answer = .user_code,
+    correct = correct,
+    feedback = feedback,
+    max_score = 1
+  )
+})
+```
+
+## Question 3
+
+Use `dplyr::summarise()` to compute the mean temperature by station. The result
+should contain the variables `station` and `mean_temp_c`.
+
+```{r q3_summarise_temperature, exercise=TRUE}
+quebec_temperatures |>
+  group_by(station) |>
+  summarise(mean_temp_c = mean(temp_c), .groups = "drop")
+```
+
+```{r q3_summarise_temperature-solution}
+quebec_temperatures |>
+  group_by(station) |>
+  summarise(mean_temp_c = mean(temp_c), .groups = "drop")
+```
+
+```{r q3_summarise_temperature-check}
+gradethis::grade_this({
+  expected <- quebec_temperatures |>
+    dplyr::group_by(station) |>
+    dplyr::summarise(mean_temp_c = mean(temp_c), .groups = "drop") |>
+    dplyr::arrange(station)
+
+  candidate <- tryCatch(
+    {
+      .result |>
+        as.data.frame() |>
+        dplyr::arrange(station)
+    },
+    error = function(cnd) NULL
+  )
+
+  correct <- !is.null(candidate) &&
+    all(c("station", "mean_temp_c") %in% names(candidate)) &&
+    nrow(candidate) == nrow(expected) &&
+    isTRUE(all.equal(candidate$mean_temp_c, expected$mean_temp_c))
+
+  feedback <- if (correct) {
+    "Correct. The summary has the expected mean temperature by station."
+  } else {
+    "Try again. Group by station, then summarise mean_temp_c = mean(temp_c)."
+  }
+
+  con <- open_tracking_db()
+  on.exit(DBI::dbDisconnect(con), add = TRUE)
+
+  learnrTrackR::track_gradethis_attempt(
+    con = con,
+    student_id = student_id,
+    tutorial_id = tutorial_id,
+    question_id = "q3_summarise_temperature",
+    submitted_answer = .user_code,
+    correct = correct,
+    feedback = feedback,
+    max_score = 1
+  )
+})
+```
+
+## Results
+
+After submitting the code exercises, run `inspect-results.R` from this example
+directory to inspect the stored attempts and scores.
