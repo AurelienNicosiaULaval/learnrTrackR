@@ -4,8 +4,9 @@
 
 The prototype uses two R-side strategies.
 
-For `learnr` multiple-choice questions, it uses `tracked_question_radio()` or
-`tracked_question_checkbox()`. These wrappers create normal `learnr` questions
+For `learnr` questions, it uses `tracked_question_radio()`,
+`tracked_question_checkbox()`, `tracked_question_text()`, or
+`tracked_question_numeric()`. These wrappers create normal `learnr` questions
 and add a small custom S3 class. When `learnr::question_is_correct()` evaluates
 the submitted value, `learnrTrackR` records the submission and then returns the
 usual `learnr` result.
@@ -37,7 +38,7 @@ or `gradethis` result for the learner.
 - Student identifier from `LEARNRTRACKR_STUDENT_ID`.
 - Tutorial identifier.
 - Question identifier.
-- Submitted choices for tracked radio and checkbox questions.
+- Submitted values for tracked radio, checkbox, text, and numeric questions.
 - Submitted code from `.user_code` for tracked code exercises.
 - Correct or incorrect status.
 - Score and maximum score.
@@ -46,7 +47,7 @@ or `gradethis` result for the learner.
 
 ## What is not tracked yet
 
-- Free-text and numeric `learnr` questions.
+- Custom `learnr` question types outside the four built-in wrappers.
 - Browser events.
 - Shiny session metadata.
 - Authenticated student identity.
@@ -54,6 +55,5 @@ or `gradethis` result for the learner.
 
 ## Next technical question
 
-The next investigation should focus on extending the same question wrapper
-pattern to free-text and numeric `learnr` questions, then deciding whether the
-package should expose a single generic `tracked_question()` helper.
+The next investigation should decide whether the package should expose a single
+generic `tracked_question()` helper that dispatches to the four wrappers.

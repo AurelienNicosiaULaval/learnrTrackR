@@ -30,7 +30,7 @@ store simulated attempts and export results for inspection.
 - Export attempts or scores to CSV.
 - Provide a minimal example and unit tests.
 - Provide a minimal `learnr` and `gradethis` prototype for tracked
-  multiple-choice questions and code exercises.
+  questions and code exercises.
 
 ## What the MVP does not do yet
 
@@ -106,11 +106,11 @@ DBI::dbDisconnect(con)
 
 ## Minimal learnr prototype
 
-The directory `inst/examples/minimal-learnr/` contains a small tutorial with one
-tracked multiple-choice question and two tracked code exercises. The
-multiple-choice question uses `tracked_question_radio()`. The code exercises
-use explicit calls to `track_gradethis_attempt()` inside
-`gradethis::grade_this()` check chunks.
+The directory `inst/examples/minimal-learnr/` contains a small tutorial with
+tracked radio, text, and numeric questions, plus two tracked code exercises.
+The questions use `tracked_question_radio()`, `tracked_question_text()`, and
+`tracked_question_numeric()`. The code exercises use explicit calls to
+`track_gradethis_attempt()` inside `gradethis::grade_this()` check chunks.
 
 From the package source directory, install the package locally first:
 
@@ -139,6 +139,6 @@ After submitting the code exercises:
 source("inst/examples/minimal-learnr/inspect-results.R")
 ```
 
-Radio-button and checkbox questions can be tracked with
-`tracked_question_radio()` and `tracked_question_checkbox()`. Text and numeric
-questions are not wrapped yet.
+The four built-in `learnr` question families can be tracked with
+`tracked_question_radio()`, `tracked_question_checkbox()`,
+`tracked_question_text()`, and `tracked_question_numeric()`.

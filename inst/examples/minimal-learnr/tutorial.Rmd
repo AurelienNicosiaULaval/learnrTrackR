@@ -5,7 +5,7 @@ output:
     progressive: true
     allow_skip: true
 runtime: shiny_prerendered
-description: "A minimal learnr tutorial showing explicit learnrTrackR tracking in gradethis check chunks."
+description: "A minimal learnr tutorial showing explicit learnrTrackR tracking for questions and code exercises."
 ---
 
 ```{r setup, include=FALSE}
@@ -77,6 +77,52 @@ learnrTrackR::tracked_question_radio(
 
 ## Question 2
 
+This text question is tracked with `learnrTrackR::tracked_question_text()`.
+
+```{r q2_text, echo=FALSE}
+learnrTrackR::tracked_question_text(
+  "Which station is colder on average in this data set? Enter Québec or Montréal.",
+  learnr::answer_fn(
+    function(value) {
+      if (tolower(trimws(value)) %in% c("quebec", "québec")) {
+        learnr::correct("Correct. Québec is colder on average in this data set.")
+      } else {
+        learnr::incorrect("Try again. Compare the station means.")
+      }
+    },
+    label = "station checker"
+  ),
+  allow_retry = TRUE,
+  question_id = "q2_text_station",
+  tutorial_id = tutorial_id,
+  student_id = student_id,
+  db_path = tracking_db_path,
+  max_score = 1
+)
+```
+
+## Question 3
+
+This numeric question is tracked with `learnrTrackR::tracked_question_numeric()`.
+
+```{r q3_numeric, echo=FALSE}
+learnrTrackR::tracked_question_numeric(
+  "How many rows are in the temperature data set?",
+  learnr::answer(6, correct = TRUE, message = "Correct."),
+  allow_retry = TRUE,
+  min = 0,
+  max = 20,
+  step = 1,
+  question_id = "q3_numeric_rows",
+  tutorial_id = tutorial_id,
+  student_id = student_id,
+  db_path = tracking_db_path,
+  max_score = 1
+)
+```
+
+## Code exercise 1
+
 Use `mean()` to compute the mean temperature in the small data set.
 
 ```{r show-data}
@@ -117,7 +163,7 @@ gradethis::grade_this({
 })
 ```
 
-## Question 3
+## Code exercise 2
 
 Use `dplyr::summarise()` to compute the mean temperature by station. The result
 should contain the variables `station` and `mean_temp_c`.

@@ -259,6 +259,194 @@ tracked_question_checkbox <- function(text,
   )
 }
 
+#' Create a tracked learnr text question
+#'
+#' Wraps [learnr::question_text()] and records each submitted answer in a
+#' `learnrTrackR` SQLite database when `learnr` evaluates the question.
+#'
+#' The tracking implementation uses the public `learnr::question_is_correct()`
+#' S3 extension point. It does not use browser JavaScript interception.
+#'
+#' @param text Question text passed to [learnr::question_text()].
+#' @param ... Answers created with [learnr::answer()] or [learnr::answer_fn()],
+#'   followed by optional arguments passed to [learnr::question_text()].
+#' @param question_id Question identifier stored in the tracking database.
+#' @param tutorial_id Tutorial identifier stored in the tracking database.
+#' @param student_id Student identifier stored in the tracking database.
+#' @param db_path Path to the SQLite tracking database.
+#' @param max_score Maximum score stored for the question. Defaults to `1`.
+#' @param correct Text shown by `learnr` for a correct answer.
+#' @param incorrect Text shown by `learnr` for an incorrect answer.
+#' @param try_again Text shown by `learnr` for an incorrect retry.
+#' @param allow_retry Whether `learnr` should allow retries.
+#' @param random_answer_order Passed to [learnr::question_text()].
+#' @param placeholder Placeholder text for the input.
+#' @param trim Whether `learnr` should trim whitespace before checking.
+#' @param rows,cols Optional text area dimensions.
+#' @param options Additional `learnr` question options.
+#'
+#' @return A `learnr` text question object with tracking metadata.
+#' @export
+#'
+#' @examples
+#' if (requireNamespace("learnr", quietly = TRUE)) {
+#'   db_path <- tempfile(fileext = ".sqlite")
+#'   question <- tracked_question_text(
+#'     "Type the word mean.",
+#'     learnr::answer("mean", correct = TRUE),
+#'     question_id = "q1",
+#'     tutorial_id = "module_01",
+#'     student_id = "student_001",
+#'     db_path = db_path
+#'   )
+#' }
+tracked_question_text <- function(text,
+                                  ...,
+                                  question_id,
+                                  tutorial_id,
+                                  student_id,
+                                  db_path,
+                                  max_score = 1,
+                                  correct = "Correct!",
+                                  incorrect = "Incorrect",
+                                  try_again = incorrect,
+                                  allow_retry = FALSE,
+                                  random_answer_order = FALSE,
+                                  placeholder = "Enter answer here...",
+                                  trim = TRUE,
+                                  rows = NULL,
+                                  cols = NULL,
+                                  options = list()) {
+  if (!requireNamespace("learnr", quietly = TRUE)) {
+    cli::cli_abort(
+      "Package {.pkg learnr} is required to use {.fn tracked_question_text}."
+    )
+  }
+
+  tracking <- validate_learnr_tracking_config(
+    student_id = student_id,
+    tutorial_id = tutorial_id,
+    question_id = question_id,
+    db_path = db_path,
+    max_score = max_score
+  )
+
+  question <- learnr::question_text(
+    text,
+    ...,
+    correct = correct,
+    incorrect = incorrect,
+    try_again = try_again,
+    allow_retry = allow_retry,
+    random_answer_order = random_answer_order,
+    placeholder = placeholder,
+    trim = trim,
+    rows = rows,
+    cols = cols,
+    options = options
+  )
+
+  add_tracked_question_class(
+    question = question,
+    class_name = "learnrTrackR_tracked_text",
+    tracking = tracking
+  )
+}
+
+#' Create a tracked learnr numeric question
+#'
+#' Wraps [learnr::question_numeric()] and records each submitted answer in a
+#' `learnrTrackR` SQLite database when `learnr` evaluates the question.
+#'
+#' The tracking implementation uses the public `learnr::question_is_correct()`
+#' S3 extension point. It does not use browser JavaScript interception.
+#'
+#' @param text Question text passed to [learnr::question_numeric()].
+#' @param ... Answers created with [learnr::answer()] or [learnr::answer_fn()],
+#'   followed by optional arguments passed to [learnr::question_numeric()].
+#' @param question_id Question identifier stored in the tracking database.
+#' @param tutorial_id Tutorial identifier stored in the tracking database.
+#' @param student_id Student identifier stored in the tracking database.
+#' @param db_path Path to the SQLite tracking database.
+#' @param max_score Maximum score stored for the question. Defaults to `1`.
+#' @param correct Text shown by `learnr` for a correct answer.
+#' @param incorrect Text shown by `learnr` for an incorrect answer.
+#' @param try_again Text shown by `learnr` for an incorrect retry.
+#' @param allow_retry Whether `learnr` should allow retries.
+#' @param value Initial numeric value.
+#' @param min,max Optional numeric bounds.
+#' @param step Optional numeric step.
+#' @param options Additional `learnr` question options.
+#' @param tolerance Numeric tolerance used by `learnr`.
+#'
+#' @return A `learnr` numeric question object with tracking metadata.
+#' @export
+#'
+#' @examples
+#' if (requireNamespace("learnr", quietly = TRUE)) {
+#'   db_path <- tempfile(fileext = ".sqlite")
+#'   question <- tracked_question_numeric(
+#'     "What is 2 + 2?",
+#'     learnr::answer(4, correct = TRUE),
+#'     question_id = "q1",
+#'     tutorial_id = "module_01",
+#'     student_id = "student_001",
+#'     db_path = db_path
+#'   )
+#' }
+tracked_question_numeric <- function(text,
+                                     ...,
+                                     question_id,
+                                     tutorial_id,
+                                     student_id,
+                                     db_path,
+                                     max_score = 1,
+                                     correct = "Correct!",
+                                     incorrect = "Incorrect",
+                                     try_again = incorrect,
+                                     allow_retry = FALSE,
+                                     value = NULL,
+                                     min = NA,
+                                     max = NA,
+                                     step = NA,
+                                     options = list(),
+                                     tolerance = 1.5e-08) {
+  if (!requireNamespace("learnr", quietly = TRUE)) {
+    cli::cli_abort(
+      "Package {.pkg learnr} is required to use {.fn tracked_question_numeric}."
+    )
+  }
+
+  tracking <- validate_learnr_tracking_config(
+    student_id = student_id,
+    tutorial_id = tutorial_id,
+    question_id = question_id,
+    db_path = db_path,
+    max_score = max_score
+  )
+
+  question <- learnr::question_numeric(
+    text,
+    ...,
+    correct = correct,
+    incorrect = incorrect,
+    try_again = try_again,
+    allow_retry = allow_retry,
+    value = value,
+    min = min,
+    max = max,
+    step = step,
+    options = options,
+    tolerance = tolerance
+  )
+
+  add_tracked_question_class(
+    question = question,
+    class_name = "learnrTrackR_tracked_numeric",
+    tracking = tracking
+  )
+}
+
 serialize_learnr_submission <- function(value) {
   if (is.null(value) || length(value) == 0) {
     return("")
@@ -317,6 +505,24 @@ question_is_correct.learnrTrackR_tracked_radio <- function(question,
 question_is_correct.learnrTrackR_tracked_checkbox <- function(question,
                                                              value,
                                                              ...) {
+  result <- NextMethod()
+  track_learnr_question_result(question, value, result)
+  result
+}
+
+#' @exportS3Method learnr::question_is_correct
+question_is_correct.learnrTrackR_tracked_text <- function(question,
+                                                         value,
+                                                         ...) {
+  result <- NextMethod()
+  track_learnr_question_result(question, value, result)
+  result
+}
+
+#' @exportS3Method learnr::question_is_correct
+question_is_correct.learnrTrackR_tracked_numeric <- function(question,
+                                                            value,
+                                                            ...) {
   result <- NextMethod()
   track_learnr_question_result(question, value, result)
   result
