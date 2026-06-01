@@ -248,3 +248,109 @@ test_that("tracked_question_numeric records numeric submissions", {
   expect_equal(attempts$grade_status, "correct")
   expect_equal(attempts$score, 1)
 })
+
+test_that("tracked_question dispatches to radio questions", {
+  skip_if_not_installed("learnr")
+
+  db_path <- withr::local_tempfile(fileext = ".sqlite")
+
+  question <- tracked_question(
+    "What is 2 + 2?",
+    learnr::answer("3"),
+    learnr::answer("4", correct = TRUE),
+    type = "radio",
+    question_id = "q6_generic_radio",
+    tutorial_id = "minimal_learnr",
+    student_id = "student_001",
+    db_path = db_path,
+    max_score = 1
+  )
+
+  result <- learnr::question_is_correct(question, "4")
+
+  con <- connect_tracking_db(db_path)
+  withr::defer(DBI::dbDisconnect(con))
+  attempts <- get_attempts(con)
+
+  expect_true(inherits(question, "learnrTrackR_tracked_radio"))
+  expect_true(result$correct)
+  expect_equal(attempts$question_id, "q6_generic_radio")
+  expect_equal(attempts$score, 1)
+})
+
+test_that("tracked_question auto dispatches to checkbox questions", {
+  skip_if_not_installed("learnr")
+
+  db_path <- withr::local_tempfile(fileext = ".sqlite")
+
+  question <- tracked_question(
+    "Select all even numbers.",
+    learnr::answer("2", correct = TRUE),
+    learnr::answer("3"),
+    learnr::answer("4", correct = TRUE),
+    question_id = "q7_generic_checkbox",
+    tutorial_id = "minimal_learnr",
+    student_id = "student_001",
+    db_path = db_path,
+    max_score = 2
+  )
+
+  result <- learnr::question_is_correct(question, c("2", "4"))
+
+  con <- connect_tracking_db(db_path)
+  withr::defer(DBI::dbDisconnect(con))
+  attempts <- get_attempts(con)
+
+  expect_true(inherits(question, "learnrTrackR_tracked_checkbox"))
+  expect_true(result$correct)
+  expect_equal(attempts$question_id, "q7_generic_checkbox")
+  expect_equal(attempts$submitted_answer, "2\n4")
+  expect_equal(attempts$score, 2)
+})
+
+test_that("tracked_question dispatches to text and numeric questions", {
+  skip_if_not_installed("learnr")
+
+  text_db_path <- withr::local_tempfile(fileext = ".sqlite")
+  numeric_db_path <- withr::local_tempfile(fileext = ".sqlite")
+
+  text_question <- tracked_question(
+    "Type the word mean.",
+    learnr::answer("mean", correct = TRUE),
+    type = "text",
+    question_id = "q8_generic_text",
+    tutorial_id = "minimal_learnr",
+    student_id = "student_001",
+    db_path = text_db_path,
+    max_score = 1
+  )
+
+  numeric_question <- tracked_question(
+    "What is 2 + 2?",
+    learnr::answer(4, correct = TRUE),
+    type = "numeric",
+    question_id = "q9_generic_numeric",
+    tutorial_id = "minimal_learnr",
+    student_id = "student_001",
+    db_path = numeric_db_path,
+    max_score = 1
+  )
+
+  text_result <- learnr::question_is_correct(text_question, "mean")
+  numeric_result <- learnr::question_is_correct(numeric_question, 4)
+
+  text_con <- connect_tracking_db(text_db_path)
+  numeric_con <- connect_tracking_db(numeric_db_path)
+  withr::defer(DBI::dbDisconnect(text_con))
+  withr::defer(DBI::dbDisconnect(numeric_con))
+
+  text_attempts <- get_attempts(text_con)
+  numeric_attempts <- get_attempts(numeric_con)
+
+  expect_true(inherits(text_question, "learnrTrackR_tracked_text"))
+  expect_true(inherits(numeric_question, "learnrTrackR_tracked_numeric"))
+  expect_true(text_result$correct)
+  expect_true(numeric_result$correct)
+  expect_equal(text_attempts$submitted_answer, "mean")
+  expect_equal(numeric_attempts$submitted_answer, "4")
+})

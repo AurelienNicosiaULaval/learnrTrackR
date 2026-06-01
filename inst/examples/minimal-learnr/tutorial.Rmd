@@ -54,17 +54,17 @@ tibble::tibble(
 
 ## Question 1
 
-This multiple-choice question is tracked with
-`learnrTrackR::tracked_question_radio()`. The function keeps the usual `learnr`
-radio-button interface and records the submitted choice when `learnr` evaluates
-the answer.
+This multiple-choice question is tracked with `learnrTrackR::tracked_question()`.
+The helper keeps the usual `learnr` radio-button interface and records the
+submitted choice when `learnr` evaluates the answer.
 
 ```{r q1_multiple_choice, echo=FALSE}
-learnrTrackR::tracked_question_radio(
+learnrTrackR::tracked_question(
   "What is the mean of 2, 4, and 6?",
   learnr::answer("3"),
   learnr::answer("4", correct = TRUE, message = "Correct."),
   learnr::answer("6"),
+  type = "radio",
   allow_retry = TRUE,
   try_again = "Try again. Add the three values and divide by 3.",
   question_id = "q1_multiple_choice",
@@ -77,10 +77,10 @@ learnrTrackR::tracked_question_radio(
 
 ## Question 2
 
-This text question is tracked with `learnrTrackR::tracked_question_text()`.
+This text question is tracked with `learnrTrackR::tracked_question()`.
 
 ```{r q2_text, echo=FALSE}
-learnrTrackR::tracked_question_text(
+learnrTrackR::tracked_question(
   "Which station is colder on average in this data set? Enter Québec or Montréal.",
   learnr::answer_fn(
     function(value) {
@@ -92,6 +92,7 @@ learnrTrackR::tracked_question_text(
     },
     label = "station checker"
   ),
+  type = "text",
   allow_retry = TRUE,
   question_id = "q2_text_station",
   tutorial_id = tutorial_id,
@@ -103,12 +104,13 @@ learnrTrackR::tracked_question_text(
 
 ## Question 3
 
-This numeric question is tracked with `learnrTrackR::tracked_question_numeric()`.
+This numeric question is tracked with `learnrTrackR::tracked_question()`.
 
 ```{r q3_numeric, echo=FALSE}
-learnrTrackR::tracked_question_numeric(
+learnrTrackR::tracked_question(
   "How many rows are in the temperature data set?",
   learnr::answer(6, correct = TRUE, message = "Correct."),
+  type = "numeric",
   allow_retry = TRUE,
   min = 0,
   max = 20,

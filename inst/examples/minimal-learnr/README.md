@@ -4,8 +4,8 @@ This directory contains a minimal `learnr` prototype for `learnrTrackR`.
 
 It uses two explicit tracking strategies:
 
-- `learnrTrackR::tracked_question_*()` helpers for `learnr` radio, checkbox,
-  text, and numeric questions.
+- `learnrTrackR::tracked_question()` for `learnr` radio, checkbox, text, and
+  numeric questions.
 - `learnrTrackR::track_gradethis_attempt()` inside `gradethis::grade_this()`
   check chunks for code exercises.
 
@@ -52,5 +52,5 @@ source("inst/examples/minimal-learnr/inspect-results.R")
 ## Current limitation
 
 This prototype tracks the four built-in `learnr` question types covered by
-the wrappers: radio, checkbox, text, and numeric. Custom question types are not
-covered yet.
+`tracked_question()`: radio, checkbox, text, and numeric. Custom question types
+are not covered yet.

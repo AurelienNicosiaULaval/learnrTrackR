@@ -4,12 +4,12 @@
 
 The prototype uses two R-side strategies.
 
-For `learnr` questions, it uses `tracked_question_radio()`,
-`tracked_question_checkbox()`, `tracked_question_text()`, or
-`tracked_question_numeric()`. These wrappers create normal `learnr` questions
-and add a small custom S3 class. When `learnr::question_is_correct()` evaluates
-the submitted value, `learnrTrackR` records the submission and then returns the
-usual `learnr` result.
+For `learnr` questions, it uses `tracked_question()`, which dispatches to
+`tracked_question_radio()`, `tracked_question_checkbox()`,
+`tracked_question_text()`, or `tracked_question_numeric()`. These helpers create
+normal `learnr` questions and add a small custom S3 class. When
+`learnr::question_is_correct()` evaluates the submitted value, `learnrTrackR`
+records the submission and then returns the usual `learnr` result.
 
 For code exercises, it uses an explicit call inside `gradethis::grade_this()`
 check chunks:
@@ -55,5 +55,5 @@ or `gradethis` result for the learner.
 
 ## Next technical question
 
-The next investigation should decide whether the package should expose a single
-generic `tracked_question()` helper that dispatches to the four wrappers.
+The next investigation should focus on stronger student identification and on
+where that identifier should be collected in a tutorial workflow.

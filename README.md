@@ -34,8 +34,9 @@ store simulated attempts and export results for inspection.
 
 ## What the MVP does not do yet
 
-- It does not integrate directly with `learnr`.
-- It does not integrate directly with `gradethis`.
+- It does not automatically instrument arbitrary `learnr` tutorials.
+- It does not capture `gradethis` checks unless the tracking helper is called
+  explicitly.
 - It does not provide a Shiny dashboard.
 - It does not export directly to Moodle.
 - It does not implement authentication or student identity verification.
@@ -108,9 +109,9 @@ DBI::dbDisconnect(con)
 
 The directory `inst/examples/minimal-learnr/` contains a small tutorial with
 tracked radio, text, and numeric questions, plus two tracked code exercises.
-The questions use `tracked_question_radio()`, `tracked_question_text()`, and
-`tracked_question_numeric()`. The code exercises use explicit calls to
-`track_gradethis_attempt()` inside `gradethis::grade_this()` check chunks.
+The questions use the generic `tracked_question()` helper. The code exercises
+use explicit calls to `track_gradethis_attempt()` inside
+`gradethis::grade_this()` check chunks.
 
 From the package source directory, install the package locally first:
 
@@ -140,5 +141,6 @@ source("inst/examples/minimal-learnr/inspect-results.R")
 ```
 
 The four built-in `learnr` question families can be tracked with
+`tracked_question()`, or with the explicit wrappers
 `tracked_question_radio()`, `tracked_question_checkbox()`,
 `tracked_question_text()`, and `tracked_question_numeric()`.

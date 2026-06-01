@@ -131,6 +131,140 @@ add_tracked_question_class <- function(question, class_name, tracking) {
   question
 }
 
+normalize_tracked_question_type <- function(type, answers) {
+  type <- match.arg(
+    type,
+    choices = c(
+      "auto",
+      "single",
+      "multiple",
+      "radio",
+      "checkbox",
+      "text",
+      "numeric",
+      "learnr_radio",
+      "learnr_checkbox",
+      "learnr_text",
+      "learnr_numeric"
+    )
+  )
+
+  if (type == "auto") {
+    n_correct <- sum(vapply(
+      answers,
+      function(answer) {
+        inherits(answer, "tutorial_question_answer") && isTRUE(answer$correct)
+      },
+      logical(1)
+    ))
+
+    if (n_correct > 1) {
+      return("checkbox")
+    }
+
+    return("radio")
+  }
+
+  switch(
+    type,
+    single = "radio",
+    multiple = "checkbox",
+    learnr_radio = "radio",
+    learnr_checkbox = "checkbox",
+    learnr_text = "text",
+    learnr_numeric = "numeric",
+    type
+  )
+}
+
+#' Create a tracked learnr question
+#'
+#' Creates a tracked `learnr` question and dispatches to the appropriate
+#' question-specific helper: [tracked_question_radio()],
+#' [tracked_question_checkbox()], [tracked_question_text()], or
+#' [tracked_question_numeric()].
+#'
+#' For `type = "auto"`, the helper follows the same simple convention as
+#' `learnr::question()` for literal answer choices: one correct answer creates a
+#' radio question, and more than one correct answer creates a checkbox question.
+#' Text and numeric questions should be requested explicitly with `type = "text"`
+#' or `type = "numeric"`.
+#'
+#' @param text Question text.
+#' @param ... Answers and type-specific arguments passed to the selected
+#'   question helper.
+#' @param type Question type. Supported values are `"auto"`, `"radio"`,
+#'   `"checkbox"`, `"text"`, and `"numeric"`, with aliases `"single"`,
+#'   `"multiple"`, `"learnr_radio"`, `"learnr_checkbox"`, `"learnr_text"`, and
+#'   `"learnr_numeric"`.
+#' @param question_id Question identifier stored in the tracking database.
+#' @param tutorial_id Tutorial identifier stored in the tracking database.
+#' @param student_id Student identifier stored in the tracking database.
+#' @param db_path Path to the SQLite tracking database.
+#' @param max_score Maximum score stored for the question. Defaults to `1`.
+#'
+#' @return A tracked `learnr` question object.
+#' @export
+#'
+#' @examples
+#' if (requireNamespace("learnr", quietly = TRUE)) {
+#'   db_path <- tempfile(fileext = ".sqlite")
+#'   question <- tracked_question(
+#'     "What is 2 + 2?",
+#'     learnr::answer("3"),
+#'     learnr::answer("4", correct = TRUE),
+#'     type = "radio",
+#'     question_id = "q1",
+#'     tutorial_id = "module_01",
+#'     student_id = "student_001",
+#'     db_path = db_path
+#'   )
+#' }
+tracked_question <- function(text,
+                             ...,
+                             type = c(
+                               "auto",
+                               "single",
+                               "multiple",
+                               "radio",
+                               "checkbox",
+                               "text",
+                               "numeric",
+                               "learnr_radio",
+                               "learnr_checkbox",
+                               "learnr_text",
+                               "learnr_numeric"
+                             ),
+                             question_id,
+                             tutorial_id,
+                             student_id,
+                             db_path,
+                             max_score = 1) {
+  answers <- list(...)
+  type <- normalize_tracked_question_type(type, answers = answers)
+  args <- c(
+    list(
+      text = text
+    ),
+    answers,
+    list(
+      question_id = question_id,
+      tutorial_id = tutorial_id,
+      student_id = student_id,
+      db_path = db_path,
+      max_score = max_score
+    )
+  )
+
+  switch(
+    type,
+    radio = do.call(tracked_question_radio, args),
+    checkbox = do.call(tracked_question_checkbox, args),
+    text = do.call(tracked_question_text, args),
+    numeric = do.call(tracked_question_numeric, args)
+  )
+}
+
 #' Create a tracked learnr radio question
 #'
 #' Wraps [learnr::question_radio()] and records each submitted answer in a
