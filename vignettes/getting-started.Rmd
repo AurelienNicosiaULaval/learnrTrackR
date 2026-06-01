@@ -1,0 +1,83 @@
+---
+title: "Getting started with learnrTrackR"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Getting started with learnrTrackR}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+`learnrTrackR` currently provides a small SQLite layer for simulated tutorial
+attempts. It does not yet connect directly to `learnr` or `gradethis`.
+
+## Create a database
+
+```{r setup}
+library(learnrTrackR)
+
+db_path <- tempfile(fileext = ".sqlite")
+con <- init_tracking_db(db_path, overwrite = TRUE)
+```
+
+## Add simulated attempts
+
+```{r attempts}
+track_attempt(
+  con = con,
+  student_id = "student_001",
+  tutorial_id = "module_01",
+  question_id = "q1",
+  submitted_answer = "mean(x)",
+  grade_status = "correct",
+  score = 1,
+  max_score = 1,
+  feedback = "Correct."
+)
+
+track_attempt(
+  con = con,
+  student_id = "student_001",
+  tutorial_id = "module_01",
+  question_id = "q2",
+  submitted_answer = "summarise(df, x = mean(x))",
+  grade_status = "partial",
+  score = 0.5,
+  max_score = 1,
+  feedback = "Good idea, but check grouping."
+)
+```
+
+## Read attempts
+
+```{r read-attempts}
+get_attempts(con)
+```
+
+## Compute scores
+
+```{r scores}
+compute_scores(con, tutorial_id = "module_01", rule = "last")
+```
+
+## Export results
+
+```{r export}
+attempts_path <- tempfile(fileext = ".csv")
+scores_path <- tempfile(fileext = ".csv")
+
+export_results(con, attempts_path, type = "attempts")
+export_results(con, scores_path, type = "scores")
+
+file.exists(c(attempts_path, scores_path))
+```
+
+```{r cleanup, include = FALSE}
+DBI::dbDisconnect(con)
+```

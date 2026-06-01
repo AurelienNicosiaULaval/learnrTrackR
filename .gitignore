@@ -1,0 +1,6 @@
+.DS_Store
+.Rproj.user
+learnrTrackR.Rcheck/
+*.Rcheck/
+doc/
+Meta/

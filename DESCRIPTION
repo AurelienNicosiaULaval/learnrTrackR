@@ -1,0 +1,28 @@
+Package: learnrTrackR
+Title: Track Simulated learnr Tutorial Attempts
+Version: 0.0.1
+Authors@R:
+    person("Aurélien", "Nicosia", , "116816597+AurelienNicosiaULaval@users.noreply.github.com",
+           role = c("aut", "cre"))
+Description: Provides a minimal SQLite storage layer for simulated tutorial
+    attempts. The package records submitted answers, attempt metadata, simple
+    grading outcomes, score summaries, and CSV exports for early prototyping of
+    tracked learnr-style teaching workflows.
+License: MIT + file LICENSE
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.3
+Imports:
+    cli,
+    DBI,
+    dplyr,
+    readr,
+    RSQLite,
+    tibble
+Suggests:
+    knitr,
+    rmarkdown,
+    testthat (>= 3.0.0),
+    withr
+Config/testthat/edition: 3
+VignetteBuilder: knitr

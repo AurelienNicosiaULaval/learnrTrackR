@@ -1,0 +1,6 @@
+url: https://aureliennicosiaulaval.github.io/learnrTrackR/
+template:
+  bootstrap: 5
+navbar:
+  structure:
+    left: [intro, reference, news]
