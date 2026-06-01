@@ -144,3 +144,7 @@ The four built-in `learnr` question families can be tracked with
 `tracked_question()`, or with the explicit wrappers
 `tracked_question_radio()`, `tracked_question_checkbox()`,
 `tracked_question_text()`, and `tracked_question_numeric()`.
+
+Student identity is read with `get_tracking_student_id()`, which checks the
+`LEARNRTRACKR_STUDENT_ID` environment variable and throws an informative error
+when it is missing.

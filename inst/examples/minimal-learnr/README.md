@@ -35,6 +35,10 @@ learnr::run_tutorial(
 )
 ```
 
+The `LEARNRTRACKR_STUDENT_ID` value is required. The tutorial uses
+`get_tracking_student_id()` and stops with an informative error if the variable
+is missing or empty.
+
 If the package is installed, the tutorial path can be found with:
 
 ```r

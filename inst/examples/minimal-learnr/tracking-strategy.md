@@ -35,7 +35,8 @@ or `gradethis` result for the learner.
 
 ## What is tracked
 
-- Student identifier from `LEARNRTRACKR_STUDENT_ID`.
+- Student identifier from `LEARNRTRACKR_STUDENT_ID`, read with
+  `get_tracking_student_id()`.
 - Tutorial identifier.
 - Question identifier.
 - Submitted values for tracked radio, checkbox, text, and numeric questions.
@@ -55,5 +56,6 @@ or `gradethis` result for the learner.
 
 ## Next technical question
 
-The next investigation should focus on stronger student identification and on
-where that identifier should be collected in a tutorial workflow.
+The next investigation should focus on whether student identifiers should be
+provided only through environment variables or collected through an explicit
+tutorial launch workflow.

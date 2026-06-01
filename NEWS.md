@@ -11,3 +11,5 @@
 - Added tracked text and numeric `learnr` question helpers.
 - Added `tracked_question()` as a generic helper for built-in `learnr` question
   types.
+- Added `get_tracking_student_id()` for minimal environment-variable based
+  student identification.

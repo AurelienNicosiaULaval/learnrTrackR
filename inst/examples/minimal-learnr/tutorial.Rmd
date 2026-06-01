@@ -19,7 +19,7 @@ gradethis_setup()
 knitr::opts_chunk$set(echo = FALSE)
 
 tutorial_id <- "minimal_learnr"
-student_id <- Sys.getenv("LEARNRTRACKR_STUDENT_ID", unset = "student_demo")
+student_id <- learnrTrackR::get_tracking_student_id()
 tracking_db_path <- Sys.getenv(
   "LEARNRTRACKR_DB",
   unset = file.path(tempdir(), "learnrtrackr-minimal.sqlite")
@@ -42,7 +42,8 @@ quebec_temperatures <- tibble::tibble(
 ## Identification
 
 For this prototype, the learner is identified by the environment variable
-`LEARNRTRACKR_STUDENT_ID`.
+`LEARNRTRACKR_STUDENT_ID`. The tutorial stops with a clear error if this
+identifier is not set before launch.
 
 ```{r show-student}
 tibble::tibble(
