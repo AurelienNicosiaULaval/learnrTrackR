@@ -37,6 +37,31 @@ quebec_temperatures <- tibble::tibble(
   )),
   temp_c = c(-9, -6, -8, -5, -3, -7)
 )
+
+setup_con <- open_tracking_db()
+learnrTrackR::register_questions(
+  setup_con,
+  tutorial_id = tutorial_id,
+  questions = tibble::tibble(
+    question_id = c(
+      "q1_multiple_choice",
+      "q2_text_station",
+      "q3_numeric_rows",
+      "q2_mean_temperature",
+      "q3_summarise_temperature"
+    ),
+    question_label = c(
+      "Mean of 2, 4, and 6",
+      "Colder station",
+      "Number of data rows",
+      "Mean temperature code exercise",
+      "Station summary code exercise"
+    ),
+    question_type = c("radio", "text", "numeric", "code", "code"),
+    max_score = c(1, 1, 1, 1, 1)
+  )
+)
+DBI::dbDisconnect(setup_con)
 ```
 
 ## Identification
@@ -228,5 +253,5 @@ gradethis::grade_this({
 
 ## Results
 
-After submitting the code exercises, run `inspect-results.R` from this example
-directory to inspect the stored attempts and scores.
+After submitting the questions and code exercises, run `inspect-results.R` from
+this example directory to inspect the stored attempts and gradebook.

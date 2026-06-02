@@ -7,9 +7,10 @@
 export_results(
   con,
   path,
-  type = c("attempts", "scores"),
+  type = c("attempts", "scores", "gradebook"),
   tutorial_id = NULL,
-  rule = "last"
+  rule = "last",
+  include_unregistered = TRUE
 )
 }
 \arguments{
@@ -17,18 +18,22 @@ export_results(
 
 \item{path}{Output CSV path.}
 
-\item{type}{Export type. Use \code{"attempts"} for raw attempts or \code{"scores"} for
-summarized scores.}
+\item{type}{Export type. Use \code{"attempts"} for raw attempts, \code{"scores"} for
+observed-attempt scores, or \code{"gradebook"} for scores based on registered
+expected questions.}
 
 \item{tutorial_id}{Optional tutorial identifier.}
 
 \item{rule}{Scoring rule used when \code{type = "scores"}.}
+
+\item{include_unregistered}{If \code{TRUE}, gradebook exports include attempted
+questions that were not registered with \code{\link[=register_questions]{register_questions()}}.}
 }
 \value{
 The output path, invisibly.
 }
 \description{
-Writes either raw attempts or computed scores to a CSV file using
+Writes raw attempts, observed-attempt scores, or gradebook rows to a CSV file using
 \code{\link[readr:write_delim]{readr::write_csv()}}.
 }
 \examples{

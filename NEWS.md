@@ -13,3 +13,5 @@
   types.
 - Added `get_tracking_student_id()` for minimal environment-variable based
   student identification.
+- Added expected-question registration and gradebook scoring with unanswered
+  questions.

@@ -215,3 +215,17 @@ empty_scores_tibble <- function() {
     n_answered = integer()
   )
 }
+
+empty_gradebook_tibble <- function() {
+  tibble::tibble(
+    student_id = character(),
+    tutorial_id = character(),
+    score = numeric(),
+    max_score = numeric(),
+    percent = numeric(),
+    n_questions = integer(),
+    n_answered = integer(),
+    n_unanswered = integer(),
+    completed = logical()
+  )
+}

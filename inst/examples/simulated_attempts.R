@@ -3,6 +3,15 @@ library(learnrTrackR)
 db_path <- tempfile(fileext = ".sqlite")
 con <- init_tracking_db(db_path, overwrite = TRUE)
 
+register_questions(
+  con,
+  tutorial_id = "module_01",
+  questions = data.frame(
+    question_id = c("q1", "q2", "q3"),
+    max_score = c(1, 1, 1)
+  )
+)
+
 track_attempt(
   con = con,
   student_id = "student_001",
@@ -31,7 +40,15 @@ get_attempts(con)
 
 compute_scores(con, tutorial_id = "module_01", rule = "last")
 
+gradebook(con, tutorial_id = "module_01", rule = "last")
+
 export_results(con, tempfile(fileext = ".csv"), type = "attempts")
 export_results(con, tempfile(fileext = ".csv"), type = "scores")
+export_results(
+  con,
+  tempfile(fileext = ".csv"),
+  type = "gradebook",
+  tutorial_id = "module_01"
+)
 
 DBI::dbDisconnect(con)

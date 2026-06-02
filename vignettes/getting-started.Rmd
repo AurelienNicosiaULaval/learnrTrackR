@@ -26,6 +26,22 @@ db_path <- tempfile(fileext = ".sqlite")
 con <- init_tracking_db(db_path, overwrite = TRUE)
 ```
 
+## Register expected questions
+
+Registered questions define the denominator used by `gradebook()`. In this
+example, `q3` is expected but not answered.
+
+```{r questions}
+register_questions(
+  con,
+  tutorial_id = "module_01",
+  questions = data.frame(
+    question_id = c("q1", "q2", "q3"),
+    max_score = c(1, 1, 1)
+  )
+)
+```
+
 ## Add simulated attempts
 
 ```{r attempts}
@@ -62,8 +78,16 @@ get_attempts(con)
 
 ## Compute scores
 
+`compute_scores()` summarizes only observed attempts.
+
 ```{r scores}
 compute_scores(con, tutorial_id = "module_01", rule = "last")
+```
+
+`gradebook()` uses registered questions, so unanswered questions are included.
+
+```{r gradebook}
+gradebook(con, tutorial_id = "module_01", rule = "last")
 ```
 
 ## Export results
@@ -71,11 +95,13 @@ compute_scores(con, tutorial_id = "module_01", rule = "last")
 ```{r export}
 attempts_path <- tempfile(fileext = ".csv")
 scores_path <- tempfile(fileext = ".csv")
+gradebook_path <- tempfile(fileext = ".csv")
 
 export_results(con, attempts_path, type = "attempts")
 export_results(con, scores_path, type = "scores")
+export_results(con, gradebook_path, type = "gradebook", tutorial_id = "module_01")
 
-file.exists(c(attempts_path, scores_path))
+file.exists(c(attempts_path, scores_path, gradebook_path))
 ```
 
 ```{r cleanup, include = FALSE}

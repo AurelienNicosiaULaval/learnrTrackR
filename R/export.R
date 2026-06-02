@@ -1,14 +1,17 @@
 #' Export attempts or scores to CSV
 #'
-#' Writes either raw attempts or computed scores to a CSV file using
+#' Writes raw attempts, observed-attempt scores, or gradebook rows to a CSV file using
 #' [readr::write_csv()].
 #'
 #' @param con A DBI connection.
 #' @param path Output CSV path.
-#' @param type Export type. Use `"attempts"` for raw attempts or `"scores"` for
-#'   summarized scores.
+#' @param type Export type. Use `"attempts"` for raw attempts, `"scores"` for
+#'   observed-attempt scores, or `"gradebook"` for scores based on registered
+#'   expected questions.
 #' @param tutorial_id Optional tutorial identifier.
 #' @param rule Scoring rule used when `type = "scores"`.
+#' @param include_unregistered If `TRUE`, gradebook exports include attempted
+#'   questions that were not registered with [register_questions()].
 #'
 #' @return The output path, invisibly.
 #' @export
@@ -22,9 +25,10 @@
 #' DBI::dbDisconnect(con)
 export_results <- function(con,
                            path,
-                           type = c("attempts", "scores"),
+                           type = c("attempts", "scores", "gradebook"),
                            tutorial_id = NULL,
-                           rule = "last") {
+                           rule = "last",
+                           include_unregistered = TRUE) {
   check_required_tables(con)
 
   path <- validate_path(path)
@@ -44,7 +48,21 @@ export_results <- function(con,
   data <- switch(
     type,
     attempts = get_attempts(con, tutorial_id = tutorial_id),
-    scores = compute_scores(con, tutorial_id = tutorial_id, rule = rule)
+    scores = compute_scores(con, tutorial_id = tutorial_id, rule = rule),
+    gradebook = {
+      if (is.null(tutorial_id)) {
+        cli::cli_abort(
+          "{.arg tutorial_id} is required when {.arg type} is {.val gradebook}."
+        )
+      }
+
+      gradebook(
+        con,
+        tutorial_id = tutorial_id,
+        rule = rule,
+        include_unregistered = include_unregistered
+      )
+    }
   )
 
   readr::write_csv(data, path)
