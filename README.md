@@ -8,8 +8,7 @@ answers, attempts, grading results, scores, and exports from interactive
 teaching workflows built around `learnr`-style tutorials.
 
 This first version is intentionally small. It validates the database layer
-before any deeper integration with `learnr`, `gradethis`, Shiny, Moodle, or
-institutional authentication.
+while keeping `learnr`, `gradethis`, Moodle, and Shiny integration minimal.
 
 ## Problem
 
@@ -31,6 +30,7 @@ store simulated attempts and export results for inspection.
 - Build a gradebook that counts unanswered registered questions.
 - Export attempts or scores to CSV.
 - Export a simple Moodle-ready CSV grade table.
+- Open a minimal local Shiny teacher dashboard.
 - Provide a minimal example and unit tests.
 - Provide a minimal `learnr` and `gradethis` prototype for tracked
   questions and code exercises.
@@ -40,8 +40,9 @@ store simulated attempts and export results for inspection.
 - It does not automatically instrument arbitrary `learnr` tutorials.
 - It does not capture `gradethis` checks unless the tracking helper is called
   explicitly.
-- It does not provide a Shiny dashboard.
-- It does not export directly to Moodle.
+- It does not provide authentication or role-based access control for the
+  dashboard.
+- It does not connect to Moodle by API; Moodle export is CSV-based.
 - It does not implement authentication or student identity verification.
 - It is not designed yet for high-concurrency production use.
 
@@ -122,13 +123,26 @@ export_moodle_grades(
 DBI::dbDisconnect(con)
 ```
 
+## Teacher dashboard
+
+A minimal local Shiny dashboard can inspect attempts, registered questions,
+gradebook rows, and export files:
+
+```r
+run_dashboard(db_path)
+```
+
+The dashboard is intended for local inspection and small prototypes. It is not
+yet a secured production deployment interface.
+
 ## Short roadmap
 
 1. Validate the SQLite storage layer with simulated attempts.
 2. Expand the minimal `learnr` tutorial integration prototype.
 3. Add stronger student identification workflows.
 4. Add richer gradebook and Moodle-oriented exports.
-5. Add an instructor dashboard after the storage layer is stable.
+5. Add safer deployment and access-control options for the instructor
+   dashboard.
 
 ## Minimal learnr prototype
 
@@ -163,6 +177,12 @@ After submitting the code exercises:
 
 ```r
 source("inst/examples/minimal-learnr/inspect-results.R")
+```
+
+You can also inspect the same database with the teacher dashboard:
+
+```r
+learnrTrackR::run_dashboard(Sys.getenv("LEARNRTRACKR_DB"))
 ```
 
 The four built-in `learnr` question families can be tracked with

@@ -57,4 +57,7 @@ export_moodle_grades(
   grade_item = "Module 01 quiz"
 )
 
+# Open the local teacher dashboard interactively.
+# run_dashboard(db_path)
+
 DBI::dbDisconnect(con)

@@ -16,3 +16,4 @@
 - Added expected-question registration and gradebook scoring with unanswered
   questions.
 - Added Moodle-ready CSV grade export.
+- Added a minimal Shiny teacher dashboard.

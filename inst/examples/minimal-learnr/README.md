@@ -53,6 +53,12 @@ After submitting the code exercises in the tutorial:
 source("inst/examples/minimal-learnr/inspect-results.R")
 ```
 
+You can also inspect the same database with the teacher dashboard:
+
+```r
+learnrTrackR::run_dashboard(Sys.getenv("LEARNRTRACKR_DB"))
+```
+
 ## Current limitation
 
 This prototype tracks the four built-in `learnr` question types covered by
