@@ -30,6 +30,7 @@ store simulated attempts and export results for inspection.
 - Compute simple scores using first, last, or best attempt rules.
 - Build a gradebook that counts unanswered registered questions.
 - Export attempts or scores to CSV.
+- Export a simple Moodle-ready CSV grade table.
 - Provide a minimal example and unit tests.
 - Provide a minimal `learnr` and `gradethis` prototype for tracked
   questions and code exercises.
@@ -111,6 +112,12 @@ export_results(
   type = "gradebook",
   tutorial_id = "module_01"
 )
+export_moodle_grades(
+  con,
+  tempfile(fileext = ".csv"),
+  tutorial_id = "module_01",
+  grade_item = "Module 01 quiz"
+)
 
 DBI::dbDisconnect(con)
 ```
@@ -166,3 +173,7 @@ The four built-in `learnr` question families can be tracked with
 Student identity is read with `get_tracking_student_id()`, which checks the
 `LEARNRTRACKR_STUDENT_ID` environment variable and throws an informative error
 when it is missing.
+
+`export_moodle_grades()` writes a compact CSV with one student identifier column
+and one grade item column. Moodle then asks the teacher to map these columns to
+the appropriate user field and grade item during CSV import.

@@ -15,3 +15,4 @@
   student identification.
 - Added expected-question registration and gradebook scoring with unanswered
   questions.
+- Added Moodle-ready CSV grade export.

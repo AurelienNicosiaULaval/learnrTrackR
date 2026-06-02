@@ -96,12 +96,19 @@ gradebook(con, tutorial_id = "module_01", rule = "last")
 attempts_path <- tempfile(fileext = ".csv")
 scores_path <- tempfile(fileext = ".csv")
 gradebook_path <- tempfile(fileext = ".csv")
+moodle_path <- tempfile(fileext = ".csv")
 
 export_results(con, attempts_path, type = "attempts")
 export_results(con, scores_path, type = "scores")
 export_results(con, gradebook_path, type = "gradebook", tutorial_id = "module_01")
+export_moodle_grades(
+  con,
+  moodle_path,
+  tutorial_id = "module_01",
+  grade_item = "Module 01 quiz"
+)
 
-file.exists(c(attempts_path, scores_path, gradebook_path))
+file.exists(c(attempts_path, scores_path, gradebook_path, moodle_path))
 ```
 
 ```{r cleanup, include = FALSE}

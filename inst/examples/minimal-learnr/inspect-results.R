@@ -28,11 +28,19 @@ print(grades)
 attempts_path <- file.path(dirname(db_path), "minimal-learnr-attempts.csv")
 scores_path <- file.path(dirname(db_path), "minimal-learnr-scores.csv")
 gradebook_path <- file.path(dirname(db_path), "minimal-learnr-gradebook.csv")
+moodle_path <- file.path(dirname(db_path), "minimal-learnr-moodle.csv")
 
 export_results(con, attempts_path, type = "attempts")
 export_results(con, scores_path, type = "scores", tutorial_id = "minimal_learnr")
 export_results(con, gradebook_path, type = "gradebook", tutorial_id = "minimal_learnr")
+export_moodle_grades(
+  con,
+  moodle_path,
+  tutorial_id = "minimal_learnr",
+  grade_item = "Minimal learnr tutorial"
+)
 
 message("Wrote attempts to: ", attempts_path)
 message("Wrote scores to: ", scores_path)
 message("Wrote gradebook to: ", gradebook_path)
+message("Wrote Moodle-ready grades to: ", moodle_path)

@@ -50,5 +50,11 @@ export_results(
   type = "gradebook",
   tutorial_id = "module_01"
 )
+export_moodle_grades(
+  con,
+  tempfile(fileext = ".csv"),
+  tutorial_id = "module_01",
+  grade_item = "Module 01 quiz"
+)
 
 DBI::dbDisconnect(con)

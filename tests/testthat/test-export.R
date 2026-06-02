@@ -64,3 +64,98 @@ test_that("export_results writes gradebook CSV files", {
   expect_true("completed" %in% names(grades))
   expect_equal(grades$n_unanswered, 1)
 })
+
+test_that("moodle_grades creates a wide Moodle-ready table", {
+  db_path <- withr::local_tempfile(fileext = ".sqlite")
+  con <- init_tracking_db(db_path, overwrite = TRUE)
+  withr::defer(DBI::dbDisconnect(con))
+
+  register_questions(con, "module_01", c("q1", "q2"))
+  track_attempt(
+    con,
+    "student_001",
+    "module_01",
+    "q1",
+    "mean(x)",
+    score = 1,
+    max_score = 1
+  )
+
+  grades <- moodle_grades(
+    con,
+    tutorial_id = "module_01",
+    grade_item = "Module 01 quiz"
+  )
+
+  expect_s3_class(grades, "tbl_df")
+  expect_equal(names(grades), c("useridnumber", "Module 01 quiz"))
+  expect_equal(grades$useridnumber, "student_001")
+  expect_equal(grades[["Module 01 quiz"]], 50)
+})
+
+test_that("moodle_grades can export raw scores and custom identifier columns", {
+  db_path <- withr::local_tempfile(fileext = ".sqlite")
+  con <- init_tracking_db(db_path, overwrite = TRUE)
+  withr::defer(DBI::dbDisconnect(con))
+
+  register_questions(
+    con,
+    "module_01",
+    data.frame(question_id = c("q1", "q2"), max_score = c(2, 2))
+  )
+  track_attempt(
+    con,
+    "student_001",
+    "module_01",
+    "q1",
+    "answer",
+    score = 1.25,
+    max_score = 2
+  )
+
+  grades <- moodle_grades(
+    con,
+    tutorial_id = "module_01",
+    id_column = "email",
+    grade_item = "Module 01 raw",
+    grade_value = "score",
+    digits = 1
+  )
+
+  expect_equal(names(grades), c("email", "Module 01 raw"))
+  expect_equal(grades$email, "student_001")
+  expect_equal(grades[["Module 01 raw"]], 1.2)
+})
+
+test_that("export_moodle_grades writes a Moodle-ready CSV", {
+  db_path <- withr::local_tempfile(fileext = ".sqlite")
+  moodle_path <- withr::local_tempfile(fileext = ".csv")
+
+  con <- init_tracking_db(db_path, overwrite = TRUE)
+  withr::defer(DBI::dbDisconnect(con))
+
+  register_questions(con, "module_01", c("q1", "q2"))
+  track_attempt(
+    con,
+    "student_001",
+    "module_01",
+    "q1",
+    "mean(x)",
+    score = 1,
+    max_score = 1
+  )
+
+  expect_invisible(
+    export_moodle_grades(
+      con,
+      moodle_path,
+      tutorial_id = "module_01",
+      grade_item = "Module 01 quiz"
+    )
+  )
+
+  grades <- readr::read_csv(moodle_path, show_col_types = FALSE)
+
+  expect_equal(names(grades), c("useridnumber", "Module 01 quiz"))
+  expect_equal(grades[["Module 01 quiz"]], 50)
+})
