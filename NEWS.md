@@ -27,3 +27,4 @@
 - Added rich teacher export bundles filtered by group or student.
 - Added a teacher workflow vignette and updated the minimal `learnr` example to
   use configuration and registered students.
+- Added CSV and YAML tracking configuration template generation.

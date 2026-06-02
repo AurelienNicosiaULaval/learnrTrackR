@@ -74,6 +74,167 @@ read_tracking_config_yaml <- function(path) {
   )
 }
 
+tracking_config_template_tables <- function() {
+  list(
+    courses = tibble::tibble(
+      course_id = "stat101",
+      course_label = "Statistics 101",
+      semester = "W2026"
+    ),
+    tutorials = tibble::tibble(
+      tutorial_id = "module_01",
+      course_id = "stat101",
+      tutorial_label = "Module 1",
+      version = "0.0.1"
+    ),
+    students = tibble::tibble(
+      student_id = c("student_001", "student_002"),
+      student_label = c("Student 001", "Student 002"),
+      email = c("student_001@example.org", "student_002@example.org"),
+      group_id = c("A", "A")
+    ),
+    questions = tibble::tibble(
+      tutorial_id = "module_01",
+      question_id = c("q1", "q2"),
+      question_label = c("Question 1", "Question 2"),
+      question_type = c("radio", "numeric"),
+      max_score = c(1, 1)
+    )
+  )
+}
+
+tracking_template_yaml_lines <- function() {
+  c(
+    "courses:",
+    "  - course_id: stat101",
+    "    course_label: Statistics 101",
+    "    semester: W2026",
+    "tutorials:",
+    "  - tutorial_id: module_01",
+    "    course_id: stat101",
+    "    tutorial_label: Module 1",
+    "    version: 0.0.1",
+    "students:",
+    "  - student_id: student_001",
+    "    student_label: Student 001",
+    "    email: student_001@example.org",
+    "    group_id: A",
+    "  - student_id: student_002",
+    "    student_label: Student 002",
+    "    email: student_002@example.org",
+    "    group_id: A",
+    "questions:",
+    "  - tutorial_id: module_01",
+    "    question_id: q1",
+    "    question_label: Question 1",
+    "    question_type: radio",
+    "    max_score: 1",
+    "  - tutorial_id: module_01",
+    "    question_id: q2",
+    "    question_label: Question 2",
+    "    question_type: numeric",
+    "    max_score: 1"
+  )
+}
+
+write_tracking_config_template_csv <- function(path, overwrite) {
+  if (file.exists(path) && !dir.exists(path)) {
+    cli::cli_abort(
+      "The CSV tracking configuration path exists and is not a directory: {.path {path}}."
+    )
+  }
+
+  if (!dir.exists(path)) {
+    dir.create(path, recursive = TRUE)
+  }
+
+  tables <- tracking_config_template_tables()
+  output <- tibble::tibble(
+    component = names(tables),
+    path = file.path(path, paste0(names(tables), ".csv"))
+  )
+
+  existing <- output$path[file.exists(output$path)]
+
+  if (length(existing) > 0 && !overwrite) {
+    cli::cli_abort(c(
+      "Tracking configuration template files already exist.",
+      "x" = "Existing paths: {.path {existing}}.",
+      "i" = "Use {.code overwrite = TRUE} to replace existing template files."
+    ))
+  }
+
+  for (row_index in seq_len(nrow(output))) {
+    readr::write_csv(tables[[output$component[[row_index]]]], output$path[[row_index]])
+  }
+
+  output
+}
+
+write_tracking_config_template_yaml <- function(path, overwrite) {
+  if (dir.exists(path)) {
+    cli::cli_abort(
+      "The YAML tracking configuration template path is a directory: {.path {path}}."
+    )
+  }
+
+  if (file.exists(path) && !overwrite) {
+    cli::cli_abort(c(
+      "The tracking configuration template file already exists.",
+      "x" = "{.path {path}}.",
+      "i" = "Use {.code overwrite = TRUE} to replace it."
+    ))
+  }
+
+  parent_dir <- dirname(path)
+
+  if (!dir.exists(parent_dir)) {
+    dir.create(parent_dir, recursive = TRUE)
+  }
+
+  writeLines(tracking_template_yaml_lines(), path)
+
+  tibble::tibble(
+    component = "yaml",
+    path = path
+  )
+}
+
+#' Create a tracking configuration template
+#'
+#' Creates a small, ready-to-edit tracking configuration template. The template
+#' can be written either as a directory of CSV files or as one YAML file.
+#'
+#' @param path Output path. For `format = "csv"`, this is a directory. For
+#'   `format = "yaml"`, this is a YAML file path.
+#' @param format Template format. One of `"csv"` or `"yaml"`.
+#' @param overwrite If `TRUE`, replace existing template files at `path`.
+#'   Defaults to `FALSE`.
+#'
+#' @return A tibble with the created template component names and file paths,
+#'   invisibly.
+#' @export
+#'
+#' @examples
+#' config_dir <- tempfile()
+#' create_tracking_config_template(config_dir, format = "csv")
+#' read_tracking_config(config_dir)
+create_tracking_config_template <- function(path,
+                                            format = c("csv", "yaml"),
+                                            overwrite = FALSE) {
+  path <- validate_path(path, arg = "path")
+  format <- match.arg(format)
+  overwrite <- validate_scalar_logical(overwrite, arg = "overwrite")
+
+  created <- switch(
+    format,
+    csv = write_tracking_config_template_csv(path, overwrite = overwrite),
+    yaml = write_tracking_config_template_yaml(path, overwrite = overwrite)
+  )
+
+  invisible(created)
+}
+
 #' Read a tracking configuration
 #'
 #' Reads a declarative tracking configuration from either a YAML file or a

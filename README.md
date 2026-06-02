@@ -195,6 +195,10 @@ authentication.
 Course, tutorial, student, and question metadata can be declared in YAML or in
 a directory of CSV files:
 
+```r
+create_tracking_config_template("config", format = "csv")
+```
+
 ```text
 config/
   courses.csv
@@ -207,6 +211,13 @@ Then load the configuration into the tracking database:
 
 ```r
 load_tracking_config(con, "config")
+```
+
+For a single-file setup, create a YAML template instead:
+
+```r
+create_tracking_config_template("tracking.yml", format = "yaml")
+load_tracking_config(con, "tracking.yml")
 ```
 
 The minimal `learnr` example includes both a YAML configuration file and a CSV
