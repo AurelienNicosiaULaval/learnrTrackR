@@ -37,6 +37,64 @@ check_required_tables <- function(con, tables = required_tables()) {
   invisible(TRUE)
 }
 
+tracking_db_backend <- function(con) {
+  if (inherits(con, "SQLiteConnection")) {
+    return("sqlite")
+  }
+
+  if (inherits(con, "PqConnection")) {
+    return("postgres")
+  }
+
+  cli::cli_abort(
+    "The tracking database backend is not supported by learnrTrackR."
+  )
+}
+
+postgres_placeholder_statement <- function(statement) {
+  matches <- gregexpr("?", statement, fixed = TRUE)[[1]]
+
+  if (matches[[1]] == -1) {
+    return(statement)
+  }
+
+  for (index in seq_along(matches)) {
+    statement <- sub("\\?", paste0("$", index), statement)
+  }
+
+  statement
+}
+
+tracking_db_statement <- function(con, statement) {
+  backend <- tracking_db_backend(con)
+
+  if (backend == "postgres") {
+    return(postgres_placeholder_statement(statement))
+  }
+
+  statement
+}
+
+tracking_db_execute <- function(con, statement, params = NULL) {
+  statement <- tracking_db_statement(con, statement)
+
+  if (is.null(params) || length(params) == 0) {
+    return(DBI::dbExecute(con, statement))
+  }
+
+  DBI::dbExecute(con, statement, params = params)
+}
+
+tracking_db_get_query <- function(con, statement, params = NULL) {
+  statement <- tracking_db_statement(con, statement)
+
+  if (is.null(params) || length(params) == 0) {
+    return(DBI::dbGetQuery(con, statement))
+  }
+
+  DBI::dbGetQuery(con, statement, params = params)
+}
+
 validate_scalar_character <- function(x,
                                       arg,
                                       allow_na = FALSE,

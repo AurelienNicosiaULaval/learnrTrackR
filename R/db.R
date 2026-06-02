@@ -90,3 +90,57 @@ connect_tracking_db <- function(path) {
     }
   )
 }
+
+#' Connect to a PostgreSQL tracking database
+#'
+#' Opens a PostgreSQL database through [RPostgres::Postgres()], optionally
+#' creates the tracking schema, and checks that all required tracking tables are
+#' present.
+#'
+#' @param ... Connection arguments passed to [DBI::dbConnect()], such as
+#'   `dbname`, `host`, `port`, `user`, and `password`.
+#' @param initialize If `TRUE`, call [create_schema()] before checking required
+#'   tables. Defaults to `FALSE`.
+#'
+#' @return A DBI connection.
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' con <- connect_postgres_tracking_db(
+#'   dbname = "learnrtrackr",
+#'   host = "localhost",
+#'   user = "learnrtrackr",
+#'   password = Sys.getenv("LEARNRTRACKR_POSTGRES_PASSWORD"),
+#'   initialize = TRUE
+#' )
+#' DBI::dbDisconnect(con)
+#' }
+connect_postgres_tracking_db <- function(..., initialize = FALSE) {
+  if (!requireNamespace("RPostgres", quietly = TRUE)) {
+    cli::cli_abort(
+      "Package {.pkg RPostgres} is required to connect to PostgreSQL."
+    )
+  }
+
+  initialize <- validate_scalar_logical(initialize, arg = "initialize")
+  con <- DBI::dbConnect(RPostgres::Postgres(), ...)
+
+  tryCatch(
+    {
+      if (initialize) {
+        create_schema(con)
+      }
+
+      check_required_tables(con)
+      con
+    },
+    error = function(cnd) {
+      if (DBI::dbIsValid(con)) {
+        DBI::dbDisconnect(con)
+      }
+
+      stop(cnd)
+    }
+  )
+}

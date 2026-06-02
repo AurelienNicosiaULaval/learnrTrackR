@@ -72,7 +72,7 @@ register_courses <- function(con, courses, timestamp = Sys.time()) {
 
   DBI::dbWithTransaction(con, {
     for (row_index in seq_len(nrow(normalized))) {
-      DBI::dbExecute(
+      tracking_db_execute(
         con,
         paste(
           "INSERT INTO courses",
@@ -126,12 +126,12 @@ get_courses <- function(con, course_id = NULL) {
   )
 
   if (is.null(course_id)) {
-    courses <- DBI::dbGetQuery(
+    courses <- tracking_db_get_query(
       con,
       paste(query, "ORDER BY course_id ASC")
     )
   } else {
-    courses <- DBI::dbGetQuery(
+    courses <- tracking_db_get_query(
       con,
       paste(query, "WHERE course_id = ? ORDER BY course_id ASC"),
       params = list(course_id)
@@ -236,7 +236,7 @@ register_tutorials <- function(con,
 
   DBI::dbWithTransaction(con, {
     for (row_index in seq_len(nrow(normalized))) {
-      DBI::dbExecute(
+      tracking_db_execute(
         con,
         paste(
           "INSERT INTO tutorials",
@@ -319,9 +319,9 @@ get_tutorials <- function(con,
   query <- paste(query, "ORDER BY tutorial_id ASC")
 
   if (length(params) > 0) {
-    tutorials <- DBI::dbGetQuery(con, query, params = params)
+    tutorials <- tracking_db_get_query(con, query, params = params)
   } else {
-    tutorials <- DBI::dbGetQuery(con, query)
+    tutorials <- tracking_db_get_query(con, query)
   }
 
   tibble::as_tibble(tutorials)

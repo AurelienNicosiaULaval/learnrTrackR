@@ -28,3 +28,5 @@
 - Added a teacher workflow vignette and updated the minimal `learnr` example to
   use configuration and registered students.
 - Added CSV and YAML tracking configuration template generation.
+- Added optional PostgreSQL schema creation and connection support through
+  `connect_postgres_tracking_db()`.

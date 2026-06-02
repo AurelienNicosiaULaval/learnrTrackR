@@ -223,6 +223,28 @@ load_tracking_config(con, "tracking.yml")
 The minimal `learnr` example includes both a YAML configuration file and a CSV
 configuration directory.
 
+## PostgreSQL prototype
+
+SQLite remains the default backend for local prototypes. For a server-backed
+course setup, install `RPostgres` and connect to an existing PostgreSQL
+database:
+
+```r
+con <- connect_postgres_tracking_db(
+  dbname = "learnrtrackr",
+  host = "localhost",
+  user = "learnrtrackr",
+  password = Sys.getenv("LEARNRTRACKR_POSTGRES_PASSWORD"),
+  initialize = TRUE
+)
+
+load_tracking_config(con, "config")
+```
+
+The PostgreSQL path is intended for controlled deployments. The current Shiny
+launcher still accepts a SQLite database path; use `dashboard_data(con, ...)`
+directly when working with an open PostgreSQL connection.
+
 ## Short roadmap
 
 1. Validate the SQLite storage layer with simulated attempts.

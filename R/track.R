@@ -1,5 +1,5 @@
 next_attempt_number <- function(con, student_id, tutorial_id, question_id) {
-  result <- DBI::dbGetQuery(
+  result <- tracking_db_get_query(
     con,
     paste(
       "SELECT COALESCE(MAX(attempt_number), 0) + 1 AS attempt_number",
@@ -17,14 +17,14 @@ upsert_session <- function(con,
                            student_id,
                            tutorial_id,
                            timestamp) {
-  exists <- DBI::dbGetQuery(
+  exists <- tracking_db_get_query(
     con,
     "SELECT COUNT(*) AS n FROM sessions WHERE session_id = ?",
     params = list(session_id)
   )$n[[1]]
 
   if (exists == 0) {
-    DBI::dbExecute(
+    tracking_db_execute(
       con,
       paste(
         "INSERT INTO sessions",
@@ -40,7 +40,7 @@ upsert_session <- function(con,
       )
     )
   } else {
-    DBI::dbExecute(
+    tracking_db_execute(
       con,
       "UPDATE sessions SET last_seen_at = ? WHERE session_id = ?",
       params = list(timestamp, session_id)
@@ -48,6 +48,52 @@ upsert_session <- function(con,
   }
 
   invisible(session_id)
+}
+
+insert_attempt <- function(con,
+                           session_id,
+                           student_id,
+                           tutorial_id,
+                           question_id,
+                           attempt_number,
+                           submitted_answer,
+                           grade_status,
+                           score,
+                           max_score,
+                           feedback,
+                           timestamp) {
+  statement <- paste(
+    "INSERT INTO attempts",
+    "(session_id, student_id, tutorial_id, question_id, attempt_number,",
+    "submitted_answer, grade_status, score, max_score, feedback, timestamp)",
+    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+  )
+  params <- list(
+    session_id,
+    student_id,
+    tutorial_id,
+    question_id,
+    attempt_number,
+    submitted_answer,
+    grade_status,
+    score,
+    max_score,
+    feedback,
+    timestamp
+  )
+
+  if (tracking_db_backend(con) == "postgres") {
+    result <- tracking_db_get_query(
+      con,
+      paste(statement, "RETURNING attempt_id"),
+      params = params
+    )
+
+    return(result$attempt_id[[1]])
+  }
+
+  tracking_db_execute(con, statement, params = params)
+  tracking_db_get_query(con, "SELECT last_insert_rowid() AS attempt_id")$attempt_id[[1]]
 }
 
 #' Record a simulated tutorial attempt
@@ -180,30 +226,20 @@ track_attempt <- function(con,
       )
     }
 
-    DBI::dbExecute(
+    insert_attempt(
       con,
-      paste(
-        "INSERT INTO attempts",
-        "(session_id, student_id, tutorial_id, question_id, attempt_number,",
-        "submitted_answer, grade_status, score, max_score, feedback, timestamp)",
-        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
-      ),
-      params = list(
-        session_id,
-        student_id,
-        tutorial_id,
-        question_id,
-        attempt_number,
-        submitted_answer,
-        grade_status,
-        score,
-        max_score,
-        feedback,
-        timestamp
-      )
+      session_id = session_id,
+      student_id = student_id,
+      tutorial_id = tutorial_id,
+      question_id = question_id,
+      attempt_number = attempt_number,
+      submitted_answer = submitted_answer,
+      grade_status = grade_status,
+      score = score,
+      max_score = max_score,
+      feedback = feedback,
+      timestamp = timestamp
     )
-
-    DBI::dbGetQuery(con, "SELECT last_insert_rowid() AS attempt_id")$attempt_id[[1]]
   })
 
   invisible(as.integer(attempt_id))
@@ -283,9 +319,9 @@ get_attempts <- function(con,
   query <- paste(query, "ORDER BY timestamp ASC, attempt_id ASC")
 
   if (length(params) > 0) {
-    attempts <- DBI::dbGetQuery(con, query, params = params)
+    attempts <- tracking_db_get_query(con, query, params = params)
   } else {
-    attempts <- DBI::dbGetQuery(con, query)
+    attempts <- tracking_db_get_query(con, query)
   }
 
   tibble::as_tibble(attempts)

@@ -23,6 +23,7 @@ Suggests:
     gradethis,
     knitr,
     learnr,
+    RPostgres,
     rmarkdown,
     shiny,
     testthat (>= 3.0.0),

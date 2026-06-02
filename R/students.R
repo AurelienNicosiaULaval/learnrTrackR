@@ -51,7 +51,7 @@ normalize_students_data <- function(students, timestamp) {
 }
 
 student_is_registered <- function(con, student_id) {
-  result <- DBI::dbGetQuery(
+  result <- tracking_db_get_query(
     con,
     "SELECT COUNT(*) AS n FROM students WHERE student_id = ?",
     params = list(student_id)
@@ -112,7 +112,7 @@ register_students <- function(con,
 
   DBI::dbWithTransaction(con, {
     for (row_index in seq_len(nrow(normalized))) {
-      DBI::dbExecute(
+      tracking_db_execute(
         con,
         paste(
           "INSERT INTO students",
@@ -195,9 +195,9 @@ get_students <- function(con,
   query <- paste(query, "ORDER BY student_id ASC")
 
   if (length(params) > 0) {
-    students <- DBI::dbGetQuery(con, query, params = params)
+    students <- tracking_db_get_query(con, query, params = params)
   } else {
-    students <- DBI::dbGetQuery(con, query)
+    students <- tracking_db_get_query(con, query)
   }
 
   tibble::as_tibble(students)

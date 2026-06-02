@@ -13,9 +13,9 @@ create_schema(con)
 The input connection, invisibly.
 }
 \description{
-Creates the SQLite tables required by the MVP tracking layer. The function is
-idempotent: calling it several times on the same connection keeps existing
-data and only creates missing tables.
+Creates the SQLite or PostgreSQL tables required by the tracking layer. The
+function is idempotent: calling it several times on the same connection keeps
+existing data and only creates missing tables.
 }
 \examples{
 db_path <- tempfile(fileext = ".sqlite")

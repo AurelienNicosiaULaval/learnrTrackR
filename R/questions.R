@@ -128,7 +128,7 @@ register_questions <- function(con,
 
   DBI::dbWithTransaction(con, {
     if (overwrite) {
-      DBI::dbExecute(
+      tracking_db_execute(
         con,
         "DELETE FROM questions WHERE tutorial_id = ?",
         params = list(tutorial_id)
@@ -136,12 +136,16 @@ register_questions <- function(con,
     }
 
     for (row_index in seq_len(nrow(normalized))) {
-      DBI::dbExecute(
+      tracking_db_execute(
         con,
         paste(
-          "INSERT OR REPLACE INTO questions",
+          "INSERT INTO questions",
           "(question_id, tutorial_id, question_label, question_type, max_score, created_at)",
-          "VALUES (?, ?, ?, ?, ?, ?)"
+          "VALUES (?, ?, ?, ?, ?, ?)",
+          "ON CONFLICT(question_id, tutorial_id) DO UPDATE SET",
+          "question_label = COALESCE(excluded.question_label, questions.question_label),",
+          "question_type = COALESCE(excluded.question_type, questions.question_type),",
+          "max_score = COALESCE(excluded.max_score, questions.max_score)"
         ),
         params = list(
           normalized$question_id[[row_index]],
@@ -189,12 +193,12 @@ get_questions <- function(con, tutorial_id = NULL) {
   )
 
   if (is.null(tutorial_id)) {
-    questions <- DBI::dbGetQuery(
+    questions <- tracking_db_get_query(
       con,
       paste(query, "ORDER BY tutorial_id ASC, question_id ASC")
     )
   } else {
-    questions <- DBI::dbGetQuery(
+    questions <- tracking_db_get_query(
       con,
       paste(query, "WHERE tutorial_id = ? ORDER BY question_id ASC"),
       params = list(tutorial_id)
