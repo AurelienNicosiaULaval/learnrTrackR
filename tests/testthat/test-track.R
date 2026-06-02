@@ -47,3 +47,42 @@ test_that("get_attempts filters by student, tutorial, and question", {
   expect_equal(nrow(get_attempts(con, tutorial_id = "module_01")), 2)
   expect_equal(nrow(get_attempts(con, question_id = "q2")), 1)
 })
+
+test_that("track_attempt can require a registered student", {
+  db_path <- withr::local_tempfile(fileext = ".sqlite")
+  con <- init_tracking_db(db_path, overwrite = TRUE)
+  withr::defer(DBI::dbDisconnect(con))
+
+  register_students(con, "student_001")
+
+  expect_no_error(
+    track_attempt(
+      con,
+      "student_001",
+      "module_01",
+      "q1",
+      "mean(x)",
+      require_registered_student = TRUE
+    )
+  )
+  expect_error(
+    track_attempt(
+      con,
+      "student_002",
+      "module_01",
+      "q1",
+      "sd(x)",
+      require_registered_student = TRUE
+    ),
+    "not registered"
+  )
+  expect_no_error(
+    track_attempt(
+      con,
+      "student_002",
+      "module_01",
+      "q1",
+      "sd(x)"
+    )
+  )
+})

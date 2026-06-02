@@ -3,6 +3,15 @@ library(learnrTrackR)
 db_path <- tempfile(fileext = ".sqlite")
 con <- init_tracking_db(db_path, overwrite = TRUE)
 
+register_students(
+  con,
+  data.frame(
+    student_id = c("student_001", "student_002"),
+    student_label = c("Student 1", "Student 2"),
+    group_id = c("A", "A")
+  )
+)
+
 register_questions(
   con,
   tutorial_id = "module_01",
@@ -21,7 +30,8 @@ track_attempt(
   grade_status = "correct",
   score = 1,
   max_score = 1,
-  feedback = "Correct."
+  feedback = "Correct.",
+  require_registered_student = TRUE
 )
 
 track_attempt(

@@ -70,6 +70,8 @@ upsert_session <- function(con,
 #' @param session_id Optional session identifier.
 #' @param attempt_number Optional positive integer attempt number.
 #' @param timestamp Attempt timestamp. Defaults to `Sys.time()`.
+#' @param require_registered_student If `TRUE`, `student_id` must already be
+#'   present in the `students` table through [register_students()].
 #'
 #' @return The inserted `attempt_id`, invisibly.
 #' @export
@@ -102,7 +104,8 @@ track_attempt <- function(con,
                           feedback = NA_character_,
                           session_id = NULL,
                           attempt_number = NULL,
-                          timestamp = Sys.time()) {
+                          timestamp = Sys.time(),
+                          require_registered_student = FALSE) {
   check_required_tables(con)
 
   student_id <- validate_scalar_character(student_id, arg = "student_id")
@@ -133,6 +136,14 @@ track_attempt <- function(con,
     allow_empty = TRUE
   )
   timestamp <- normalize_timestamp(timestamp)
+  require_registered_student <- validate_scalar_logical(
+    require_registered_student,
+    arg = "require_registered_student"
+  )
+
+  if (require_registered_student) {
+    check_registered_student(con, student_id)
+  }
 
   if (is.null(session_id)) {
     session_id <- generate_session_id(

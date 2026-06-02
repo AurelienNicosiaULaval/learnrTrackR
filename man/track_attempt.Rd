@@ -16,7 +16,8 @@ track_attempt(
   feedback = NA_character_,
   session_id = NULL,
   attempt_number = NULL,
-  timestamp = Sys.time()
+  timestamp = Sys.time(),
+  require_registered_student = FALSE
 )
 }
 \arguments{
@@ -44,6 +45,9 @@ track_attempt(
 \item{attempt_number}{Optional positive integer attempt number.}
 
 \item{timestamp}{Attempt timestamp. Defaults to \code{Sys.time()}.}
+
+\item{require_registered_student}{If \code{TRUE}, \code{student_id} must already be
+present in the \code{students} table through \code{\link[=register_students]{register_students()}}.}
 }
 \value{
 The inserted \code{attempt_id}, invisibly.

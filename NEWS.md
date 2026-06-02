@@ -18,3 +18,5 @@
 - Added Moodle-ready CSV grade export.
 - Added a minimal Shiny teacher dashboard.
 - Added local dashboard launch safeguards and an optional dashboard token gate.
+- Added student registration helpers and optional registered-student checks for
+  attempts.

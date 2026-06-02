@@ -24,6 +24,7 @@ store simulated attempts and export results for inspection.
 - Create a SQLite tracking database.
 - Create the required schema.
 - Record simulated attempts.
+- Register expected student identifiers.
 - Register expected tutorial questions.
 - Read and filter attempts.
 - Compute simple scores using first, last, or best attempt rules.
@@ -43,7 +44,8 @@ store simulated attempts and export results for inspection.
 - It does not provide institutional authentication or role-based access
   control for the dashboard.
 - It does not connect to Moodle by API; Moodle export is CSV-based.
-- It does not implement authentication or student identity verification.
+- It does not verify real student identity beyond optional local registry
+  checks.
 - It is not designed yet for high-concurrency production use.
 
 ## Installation during development
@@ -68,6 +70,15 @@ library(learnrTrackR)
 db_path <- tempfile(fileext = ".sqlite")
 con <- init_tracking_db(db_path, overwrite = TRUE)
 
+register_students(
+  con,
+  data.frame(
+    student_id = c("student_001", "student_002"),
+    student_label = c("Student 1", "Student 2"),
+    group_id = c("A", "A")
+  )
+)
+
 register_questions(
   con,
   tutorial_id = "module_01",
@@ -86,7 +97,8 @@ track_attempt(
   grade_status = "correct",
   score = 1,
   max_score = 1,
-  feedback = "Correct."
+  feedback = "Correct.",
+  require_registered_student = TRUE
 )
 
 track_attempt(
@@ -203,6 +215,10 @@ The four built-in `learnr` question families can be tracked with
 Student identity is read with `get_tracking_student_id()`, which checks the
 `LEARNRTRACKR_STUDENT_ID` environment variable and throws an informative error
 when it is missing.
+
+Expected student identifiers can be stored with `register_students()`. Attempts
+can then require a registered identifier by setting
+`require_registered_student = TRUE` in `track_attempt()`.
 
 `export_moodle_grades()` writes a compact CSV with one student identifier column
 and one grade item column. Moodle then asks the teacher to map these columns to
