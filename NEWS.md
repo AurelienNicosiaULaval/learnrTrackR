@@ -20,3 +20,5 @@
 - Added local dashboard launch safeguards and an optional dashboard token gate.
 - Added student registration helpers and optional registered-student checks for
   attempts.
+- Added student metadata display and registered-group filtering to the teacher
+  dashboard and its CSV downloads.

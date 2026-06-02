@@ -8,7 +8,8 @@ dashboard_data(
   con,
   tutorial_id = NULL,
   rule = c("last", "best", "first"),
-  include_unregistered = TRUE
+  include_unregistered = TRUE,
+  group_id = NULL
 )
 }
 \arguments{
@@ -21,10 +22,14 @@ available tutorial found in the database is used.}
 
 \item{include_unregistered}{If \code{TRUE}, include attempted questions that were
 not registered with \code{\link[=register_questions]{register_questions()}}.}
+
+\item{group_id}{Optional registered student group identifier. If supplied,
+only students registered in that group are included.}
 }
 \value{
-A list with tutorials, selected tutorial id, summary, gradebook,
-question summary, and attempts.
+A list with tutorials, groups, selected tutorial id, selected group
+id, summary, student summary, gradebook, question summary, attempts, and
+Moodle-ready grades.
 }
 \description{
 Computes the tables used by the teacher dashboard without launching Shiny.

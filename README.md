@@ -32,6 +32,7 @@ store simulated attempts and export results for inspection.
 - Export attempts or scores to CSV.
 - Export a simple Moodle-ready CSV grade table.
 - Open a minimal local Shiny teacher dashboard.
+- Filter dashboard tables and dashboard CSV exports by registered group.
 - Provide a minimal example and unit tests.
 - Provide a minimal `learnr` and `gradethis` prototype for tracked
   questions and code exercises.
@@ -143,6 +144,10 @@ gradebook rows, and export files:
 ```r
 run_dashboard(db_path)
 ```
+
+Registered student groups can be selected in the dashboard. The same filter is
+applied to the displayed students, attempts, gradebook rows, and downloaded CSV
+files.
 
 By default, the dashboard is launched on `127.0.0.1`. A simple local access
 token can be required by setting an environment variable:

@@ -14,6 +14,22 @@ available_dashboard_tutorials <- function(con) {
   tibble::as_tibble(tutorials)
 }
 
+available_dashboard_groups <- function(con) {
+  check_required_tables(con)
+
+  groups <- DBI::dbGetQuery(
+    con,
+    paste(
+      "SELECT DISTINCT group_id",
+      "FROM students",
+      "WHERE group_id IS NOT NULL AND group_id != ''",
+      "ORDER BY group_id ASC"
+    )
+  )
+
+  tibble::as_tibble(groups)
+}
+
 resolve_dashboard_tutorial_id <- function(con, tutorial_id = NULL) {
   tutorial_id <- validate_scalar_character(
     tutorial_id,
@@ -34,10 +50,32 @@ resolve_dashboard_tutorial_id <- function(con, tutorial_id = NULL) {
   tutorials$tutorial_id[[1]]
 }
 
+normalize_dashboard_group_id <- function(group_id = NULL) {
+  group_id <- validate_scalar_character(
+    group_id,
+    arg = "group_id",
+    allow_null = TRUE,
+    allow_empty = TRUE
+  )
+
+  if (is.null(group_id)) {
+    return(NULL)
+  }
+
+  group_id <- trimws(group_id)
+
+  if (!nzchar(group_id)) {
+    return(NULL)
+  }
+
+  group_id
+}
+
 empty_dashboard_summary <- function() {
   tibble::tibble(
     metric = c(
       "Tutorial",
+      "Group",
       "Students",
       "Attempts",
       "Questions",
@@ -46,7 +84,17 @@ empty_dashboard_summary <- function() {
       "Mean percent",
       "Median percent"
     ),
-    value = c("No tutorial available", "0", "0", "0", "0", NA_character_, NA_character_, NA_character_)
+    value = c(
+      "No tutorial available",
+      "All groups",
+      "0",
+      "0",
+      "0",
+      "0",
+      NA_character_,
+      NA_character_,
+      NA_character_
+    )
   )
 }
 
@@ -58,16 +106,17 @@ format_dashboard_number <- function(x, digits = 1) {
   format(round(x, digits), trim = TRUE, nsmall = digits)
 }
 
-summarise_dashboard <- function(tutorial_id, attempts, grades, questions) {
+summarise_dashboard <- function(tutorial_id,
+                                group_id,
+                                attempts,
+                                grades,
+                                questions,
+                                students) {
   if (is.null(tutorial_id)) {
     return(empty_dashboard_summary())
   }
 
-  n_students <- if (nrow(grades) > 0) {
-    nrow(grades)
-  } else {
-    length(unique(attempts$student_id))
-  }
+  n_students <- nrow(students)
 
   n_completed <- if (nrow(grades) > 0) {
     sum(grades$completed, na.rm = TRUE)
@@ -104,6 +153,7 @@ summarise_dashboard <- function(tutorial_id, attempts, grades, questions) {
   tibble::tibble(
     metric = c(
       "Tutorial",
+      "Group",
       "Students",
       "Attempts",
       "Questions",
@@ -114,6 +164,7 @@ summarise_dashboard <- function(tutorial_id, attempts, grades, questions) {
     ),
     value = c(
       tutorial_id,
+      if (is.null(group_id)) "All groups" else group_id,
       as.character(n_students),
       as.character(nrow(attempts)),
       as.character(nrow(questions)),
@@ -123,6 +174,185 @@ summarise_dashboard <- function(tutorial_id, attempts, grades, questions) {
       format_dashboard_number(median_percent)
     )
   )
+}
+
+empty_dashboard_students <- function() {
+  tibble::tibble(
+    student_id = character(),
+    student_label = character(),
+    email = character(),
+    group_id = character(),
+    n_attempts = integer(),
+    has_attempts = logical()
+  )
+}
+
+filter_registered_students <- function(students, group_id = NULL) {
+  if (is.null(group_id)) {
+    return(students)
+  }
+
+  students[
+    !is.na(students$group_id) & students$group_id == group_id,
+    ,
+    drop = FALSE
+  ]
+}
+
+dashboard_student_ids <- function(registered_students,
+                                  attempts,
+                                  group_id = NULL) {
+  if (!is.null(group_id)) {
+    return(sort(unique(registered_students$student_id)))
+  }
+
+  sort(unique(c(registered_students$student_id, attempts$student_id)))
+}
+
+filter_attempts_by_student_ids <- function(attempts, student_ids) {
+  if (length(student_ids) == 0) {
+    return(attempts[FALSE, , drop = FALSE])
+  }
+
+  attempts[attempts$student_id %in% student_ids, , drop = FALSE]
+}
+
+attempt_counts_by_student <- function(attempts) {
+  if (nrow(attempts) == 0) {
+    return(tibble::tibble(
+      student_id = character(),
+      n_attempts = integer()
+    ))
+  }
+
+  counts <- stats::aggregate(
+    attempt_id ~ student_id,
+    data = attempts,
+    FUN = length
+  )
+  names(counts) <- c("student_id", "n_attempts")
+  counts$n_attempts <- as.integer(counts$n_attempts)
+
+  tibble::as_tibble(counts)
+}
+
+dashboard_students_table <- function(registered_students,
+                                     attempts,
+                                     student_ids) {
+  if (length(student_ids) == 0) {
+    return(empty_dashboard_students())
+  }
+
+  out <- tibble::tibble(student_id = student_ids)
+  out <- dplyr::left_join(
+    out,
+    registered_students[
+      ,
+      c("student_id", "student_label", "email", "group_id"),
+      drop = FALSE
+    ],
+    by = "student_id"
+  )
+  out <- dplyr::left_join(
+    out,
+    attempt_counts_by_student(attempts),
+    by = "student_id"
+  )
+
+  out$n_attempts[is.na(out$n_attempts)] <- 0L
+  out$n_attempts <- as.integer(out$n_attempts)
+  out$has_attempts <- out$n_attempts > 0
+
+  out[order(is.na(out$group_id), out$group_id, out$student_id), , drop = FALSE]
+}
+
+enrich_with_student_metadata <- function(data, registered_students) {
+  metadata_columns <- c("student_id", "student_label", "email", "group_id")
+  out <- dplyr::left_join(
+    data,
+    registered_students[, metadata_columns, drop = FALSE],
+    by = "student_id"
+  )
+
+  front <- metadata_columns
+  out[, c(front, setdiff(names(out), front)), drop = FALSE]
+}
+
+dashboard_gradebook <- function(con,
+                                tutorial_id,
+                                student_ids,
+                                rule,
+                                include_unregistered) {
+  if (is.null(tutorial_id) || length(student_ids) == 0) {
+    return(empty_gradebook_tibble())
+  }
+
+  rows <- lapply(student_ids, function(current_student_id) {
+    gradebook(
+      con,
+      tutorial_id = tutorial_id,
+      student_id = current_student_id,
+      rule = rule,
+      include_unregistered = include_unregistered
+    )
+  })
+
+  dplyr::bind_rows(rows)
+}
+
+dashboard_moodle_grades <- function(grades,
+                                    tutorial_id,
+                                    id_column = "useridnumber",
+                                    grade_value = "percent",
+                                    digits = 2) {
+  grade_item <- if (is.null(tutorial_id)) {
+    "grade"
+  } else {
+    tutorial_id
+  }
+
+  if (nrow(grades) == 0) {
+    out <- tibble::tibble(
+      student_id = character(),
+      grade = numeric()
+    )
+  } else {
+    out <- tibble::tibble(
+      student_id = grades$student_id,
+      grade = format_grade_values(grades[[grade_value]], digits = digits)
+    )
+  }
+
+  names(out) <- c(id_column, grade_item)
+  out
+}
+
+safe_dashboard_filename_part <- function(value, fallback) {
+  if (is.null(value) || is.na(value) || !nzchar(value)) {
+    return(fallback)
+  }
+
+  value <- gsub("[^A-Za-z0-9._-]+", "-", value)
+  value <- gsub("^-+|-+$", "", value)
+
+  if (!nzchar(value)) {
+    return(fallback)
+  }
+
+  value
+}
+
+dashboard_download_filename <- function(tutorial_id, group_id, type) {
+  group_id <- normalize_dashboard_group_id(group_id)
+  tutorial_part <- safe_dashboard_filename_part(tutorial_id, "dashboard")
+  type_part <- safe_dashboard_filename_part(type, "export")
+
+  if (is.null(group_id)) {
+    return(paste0(tutorial_part, "-", type_part, ".csv"))
+  }
+
+  group_part <- safe_dashboard_filename_part(group_id, "group")
+  paste0(tutorial_part, "-group-", group_part, "-", type_part, ".csv")
 }
 
 empty_dashboard_questions <- function() {
@@ -142,12 +372,16 @@ empty_dashboard_questions <- function() {
 summarise_dashboard_questions <- function(con,
                                           tutorial_id,
                                           rule,
-                                          include_unregistered) {
+                                          include_unregistered,
+                                          attempts = NULL) {
   if (is.null(tutorial_id)) {
     return(empty_dashboard_questions())
   }
 
-  attempts <- get_attempts(con, tutorial_id = tutorial_id)
+  if (is.null(attempts)) {
+    attempts <- get_attempts(con, tutorial_id = tutorial_id)
+  }
+
   selected <- if (nrow(attempts) == 0) {
     attempts
   } else {
@@ -214,9 +448,12 @@ summarise_dashboard_questions <- function(con,
 #' @param rule Scoring rule passed to [gradebook()].
 #' @param include_unregistered If `TRUE`, include attempted questions that were
 #'   not registered with [register_questions()].
+#' @param group_id Optional registered student group identifier. If supplied,
+#'   only students registered in that group are included.
 #'
-#' @return A list with tutorials, selected tutorial id, summary, gradebook,
-#'   question summary, and attempts.
+#' @return A list with tutorials, groups, selected tutorial id, selected group
+#'   id, summary, student summary, gradebook, question summary, attempts, and
+#'   Moodle-ready grades.
 #' @export
 #'
 #' @examples
@@ -229,7 +466,8 @@ summarise_dashboard_questions <- function(con,
 dashboard_data <- function(con,
                            tutorial_id = NULL,
                            rule = c("last", "best", "first"),
-                           include_unregistered = TRUE) {
+                           include_unregistered = TRUE,
+                           group_id = NULL) {
   check_required_tables(con)
 
   rule <- match.arg(rule)
@@ -237,18 +475,36 @@ dashboard_data <- function(con,
     include_unregistered,
     arg = "include_unregistered"
   )
+  group_id <- normalize_dashboard_group_id(group_id)
   tutorials <- available_dashboard_tutorials(con)
+  groups <- available_dashboard_groups(con)
   tutorial_id <- resolve_dashboard_tutorial_id(con, tutorial_id = tutorial_id)
+  registered_students <- get_students(con)
+  selected_registered_students <- filter_registered_students(
+    registered_students,
+    group_id = group_id
+  )
 
   if (is.null(tutorial_id)) {
     attempts <- get_attempts(con)
     grades <- empty_gradebook_tibble()
     questions <- empty_dashboard_questions()
   } else {
-    attempts <- get_attempts(con, tutorial_id = tutorial_id)
-    grades <- gradebook(
+    all_attempts <- get_attempts(con, tutorial_id = tutorial_id)
+    student_ids <- dashboard_student_ids(
+      registered_students = selected_registered_students,
+      attempts = all_attempts,
+      group_id = group_id
+    )
+    attempts <- if (is.null(group_id)) {
+      all_attempts
+    } else {
+      filter_attempts_by_student_ids(all_attempts, student_ids)
+    }
+    grades <- dashboard_gradebook(
       con,
       tutorial_id = tutorial_id,
+      student_ids = student_ids,
       rule = rule,
       include_unregistered = include_unregistered
     )
@@ -256,24 +512,61 @@ dashboard_data <- function(con,
       con = con,
       tutorial_id = tutorial_id,
       rule = rule,
-      include_unregistered = include_unregistered
+      include_unregistered = include_unregistered,
+      attempts = attempts
     )
   }
 
+  if (is.null(tutorial_id)) {
+    student_ids <- dashboard_student_ids(
+      registered_students = selected_registered_students,
+      attempts = attempts,
+      group_id = group_id
+    )
+
+    if (!is.null(group_id)) {
+      attempts <- filter_attempts_by_student_ids(attempts, student_ids)
+    }
+  }
+
+  students <- dashboard_students_table(
+    registered_students = selected_registered_students,
+    attempts = attempts,
+    student_ids = student_ids
+  )
+  grades <- enrich_with_student_metadata(grades, registered_students)
+  attempts <- enrich_with_student_metadata(attempts, registered_students)
+  moodle <- dashboard_moodle_grades(
+    grades = grades,
+    tutorial_id = tutorial_id
+  )
+
   list(
     tutorials = tutorials,
+    groups = groups,
     tutorial_id = tutorial_id,
-    summary = summarise_dashboard(tutorial_id, attempts, grades, questions),
+    group_id = group_id,
+    summary = summarise_dashboard(
+      tutorial_id = tutorial_id,
+      group_id = group_id,
+      attempts = attempts,
+      grades = grades,
+      questions = questions,
+      students = students
+    ),
+    students = students,
     gradebook = grades,
     questions = questions,
-    attempts = attempts
+    attempts = attempts,
+    moodle_grades = moodle
   )
 }
 
 dashboard_data_from_path <- function(db_path,
                                      tutorial_id = NULL,
                                      rule = "last",
-                                     include_unregistered = TRUE) {
+                                     include_unregistered = TRUE,
+                                     group_id = NULL) {
   con <- connect_tracking_db(db_path)
   on.exit(DBI::dbDisconnect(con), add = TRUE)
 
@@ -281,7 +574,8 @@ dashboard_data_from_path <- function(db_path,
     con = con,
     tutorial_id = tutorial_id,
     rule = rule,
-    include_unregistered = include_unregistered
+    include_unregistered = include_unregistered,
+    group_id = group_id
   )
 }
 
@@ -347,6 +641,8 @@ check_dashboard_launch_security <- function(host,
 
 dashboard_main_ui <- function(choices,
                               selected,
+                              group_choices,
+                              selected_group,
                               rule,
                               include_unregistered) {
   shiny::sidebarLayout(
@@ -356,6 +652,12 @@ dashboard_main_ui <- function(choices,
         "Tutorial",
         choices = choices,
         selected = selected
+      ),
+      shiny::selectInput(
+        "group_id",
+        "Group",
+        choices = group_choices,
+        selected = selected_group
       ),
       shiny::selectInput(
         "rule",
@@ -376,6 +678,8 @@ dashboard_main_ui <- function(choices,
     shiny::mainPanel(
       shiny::h3("Summary"),
       shiny::tableOutput("summary"),
+      shiny::h3("Students"),
+      shiny::tableOutput("students"),
       shiny::h3("Gradebook"),
       shiny::tableOutput("gradebook"),
       shiny::h3("Questions"),
@@ -390,6 +694,7 @@ dashboard_app <- function(db_path,
                           tutorial_id = NULL,
                           rule = "last",
                           include_unregistered = TRUE,
+                          group_id = NULL,
                           access_token = NULL) {
   if (!requireNamespace("shiny", quietly = TRUE)) {
     cli::cli_abort(
@@ -401,10 +706,17 @@ dashboard_app <- function(db_path,
     db_path = db_path,
     tutorial_id = tutorial_id,
     rule = rule,
-    include_unregistered = include_unregistered
+    include_unregistered = include_unregistered,
+    group_id = group_id
   )
   choices <- initial_data$tutorials$tutorial_id
+  group_values <- initial_data$groups$group_id
+  group_choices <- c(
+    "All groups" = "",
+    stats::setNames(group_values, group_values)
+  )
   selected <- tutorial_id
+  selected_group <- if (is.null(group_id)) "" else group_id
 
   if (is.null(selected) && length(choices) > 0) {
     selected <- choices[[1]]
@@ -413,6 +725,8 @@ dashboard_app <- function(db_path,
   dashboard_ui <- dashboard_main_ui(
     choices = choices,
     selected = selected,
+    group_choices = group_choices,
+    selected_group = selected_group,
     rule = rule,
     include_unregistered = include_unregistered
   )
@@ -469,18 +783,24 @@ dashboard_app <- function(db_path,
         db_path = db_path,
         tutorial_id = input$tutorial_id,
         rule = input$rule,
-        include_unregistered = input$include_unregistered
+        include_unregistered = input$include_unregistered,
+        group_id = input$group_id
       )
     })
 
     output$summary <- shiny::renderTable(current_data()$summary)
+    output$students <- shiny::renderTable(current_data()$students)
     output$gradebook <- shiny::renderTable(current_data()$gradebook)
     output$questions <- shiny::renderTable(current_data()$questions)
     output$attempts <- shiny::renderTable(current_data()$attempts)
 
     output$download_gradebook <- shiny::downloadHandler(
       filename = function() {
-        paste0(input$tutorial_id, "-gradebook.csv")
+        dashboard_download_filename(
+          tutorial_id = input$tutorial_id,
+          group_id = input$group_id,
+          type = "gradebook"
+        )
       },
       content = function(file) {
         readr::write_csv(current_data()$gradebook, file)
@@ -489,20 +809,14 @@ dashboard_app <- function(db_path,
 
     output$download_moodle <- shiny::downloadHandler(
       filename = function() {
-        paste0(input$tutorial_id, "-moodle.csv")
+        dashboard_download_filename(
+          tutorial_id = input$tutorial_id,
+          group_id = input$group_id,
+          type = "moodle"
+        )
       },
       content = function(file) {
-        con <- connect_tracking_db(db_path)
-        on.exit(DBI::dbDisconnect(con), add = TRUE)
-
-        export_moodle_grades(
-          con,
-          file,
-          tutorial_id = input$tutorial_id,
-          rule = input$rule,
-          grade_item = input$tutorial_id,
-          include_unregistered = input$include_unregistered
-        )
+        readr::write_csv(current_data()$moodle_grades, file)
       }
     )
   }
@@ -521,6 +835,8 @@ dashboard_app <- function(db_path,
 #' @param rule Scoring rule passed to [gradebook()].
 #' @param include_unregistered If `TRUE`, include attempted questions that were
 #'   not registered with [register_questions()].
+#' @param group_id Optional registered student group identifier selected at
+#'   startup. If supplied, the dashboard is filtered to students in that group.
 #' @param host Host passed to [shiny::runApp()]. Defaults to `"127.0.0.1"` for
 #'   local-only use.
 #' @param access_token Optional dashboard token. If supplied, the dashboard asks
@@ -543,6 +859,7 @@ run_dashboard <- function(db_path,
                           tutorial_id = NULL,
                           rule = c("last", "best", "first"),
                           include_unregistered = TRUE,
+                          group_id = NULL,
                           host = "127.0.0.1",
                           access_token = NULL,
                           token_envvar = "LEARNRTRACKR_DASHBOARD_TOKEN",
@@ -565,6 +882,7 @@ run_dashboard <- function(db_path,
     include_unregistered,
     arg = "include_unregistered"
   )
+  group_id <- normalize_dashboard_group_id(group_id)
   host <- validate_dashboard_host(host)
   access_token <- resolve_dashboard_access_token(
     access_token = access_token,
@@ -586,6 +904,7 @@ run_dashboard <- function(db_path,
     tutorial_id = tutorial_id,
     rule = rule,
     include_unregistered = include_unregistered,
+    group_id = group_id,
     access_token = access_token
   )
 

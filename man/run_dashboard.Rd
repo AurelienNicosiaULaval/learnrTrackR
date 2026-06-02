@@ -9,6 +9,7 @@ run_dashboard(
   tutorial_id = NULL,
   rule = c("last", "best", "first"),
   include_unregistered = TRUE,
+  group_id = NULL,
   host = "127.0.0.1",
   access_token = NULL,
   token_envvar = "LEARNRTRACKR_DASHBOARD_TOKEN",
@@ -26,6 +27,9 @@ run_dashboard(
 
 \item{include_unregistered}{If \code{TRUE}, include attempted questions that were
 not registered with \code{\link[=register_questions]{register_questions()}}.}
+
+\item{group_id}{Optional registered student group identifier selected at
+startup. If supplied, the dashboard is filtered to students in that group.}
 
 \item{host}{Host passed to \code{\link[shiny:runApp]{shiny::runApp()}}. Defaults to \code{"127.0.0.1"} for
 local-only use.}
