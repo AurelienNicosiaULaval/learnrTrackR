@@ -40,8 +40,8 @@ store simulated attempts and export results for inspection.
 - It does not automatically instrument arbitrary `learnr` tutorials.
 - It does not capture `gradethis` checks unless the tracking helper is called
   explicitly.
-- It does not provide authentication or role-based access control for the
-  dashboard.
+- It does not provide institutional authentication or role-based access
+  control for the dashboard.
 - It does not connect to Moodle by API; Moodle export is CSV-based.
 - It does not implement authentication or student identity verification.
 - It is not designed yet for high-concurrency production use.
@@ -132,8 +132,18 @@ gradebook rows, and export files:
 run_dashboard(db_path)
 ```
 
-The dashboard is intended for local inspection and small prototypes. It is not
-yet a secured production deployment interface.
+By default, the dashboard is launched on `127.0.0.1`. A simple local access
+token can be required by setting an environment variable:
+
+```r
+Sys.setenv(LEARNRTRACKR_DASHBOARD_TOKEN = "replace-with-a-long-token")
+run_dashboard(db_path)
+```
+
+Running on a non-local host without a token is refused by default. The token
+gate is intended for local inspection and small prototypes. It is not a secured
+production deployment interface and does not replace institutional
+authentication.
 
 ## Short roadmap
 

@@ -9,6 +9,10 @@ run_dashboard(
   tutorial_id = NULL,
   rule = c("last", "best", "first"),
   include_unregistered = TRUE,
+  host = "127.0.0.1",
+  access_token = NULL,
+  token_envvar = "LEARNRTRACKR_DASHBOARD_TOKEN",
+  allow_remote = FALSE,
   ...
 )
 }
@@ -22,6 +26,18 @@ run_dashboard(
 
 \item{include_unregistered}{If \code{TRUE}, include attempted questions that were
 not registered with \code{\link[=register_questions]{register_questions()}}.}
+
+\item{host}{Host passed to \code{\link[shiny:runApp]{shiny::runApp()}}. Defaults to \code{"127.0.0.1"} for
+local-only use.}
+
+\item{access_token}{Optional dashboard token. If supplied, the dashboard asks
+for this token before showing data.}
+
+\item{token_envvar}{Environment variable used to read a dashboard token when
+\code{access_token} is \code{NULL}. Set to \code{NULL} to disable environment lookup.}
+
+\item{allow_remote}{If \code{FALSE}, refuse to run on a non-local host unless an
+access token is configured.}
 
 \item{...}{Additional arguments passed to \code{\link[shiny:runApp]{shiny::runApp()}}.}
 }

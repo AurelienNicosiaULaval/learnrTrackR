@@ -17,3 +17,4 @@
   questions.
 - Added Moodle-ready CSV grade export.
 - Added a minimal Shiny teacher dashboard.
+- Added local dashboard launch safeguards and an optional dashboard token gate.

@@ -58,3 +58,62 @@ test_that("dashboard_app builds a Shiny app object", {
 
   expect_s3_class(app, "shiny.appobj")
 })
+
+test_that("dashboard_app builds a token-gated Shiny app object", {
+  skip_if_not_installed("shiny")
+
+  db_path <- withr::local_tempfile(fileext = ".sqlite")
+  con <- init_tracking_db(db_path, overwrite = TRUE)
+  withr::defer(DBI::dbDisconnect(con))
+
+  register_questions(con, "module_01", c("q1"))
+
+  app <- dashboard_app(
+    db_path,
+    tutorial_id = "module_01",
+    access_token = "secret-token"
+  )
+
+  expect_s3_class(app, "shiny.appobj")
+})
+
+test_that("dashboard access token can be explicit or environment based", {
+  withr::local_envvar(LEARNRTRACKR_DASHBOARD_TOKEN = "env-token")
+
+  expect_equal(
+    resolve_dashboard_access_token("explicit-token"),
+    "explicit-token"
+  )
+  expect_equal(
+    resolve_dashboard_access_token(),
+    "env-token"
+  )
+  expect_null(
+    resolve_dashboard_access_token(token_envvar = NULL)
+  )
+})
+
+test_that("dashboard launch security refuses unprotected remote hosts", {
+  expect_true(
+    check_dashboard_launch_security(
+      host = "127.0.0.1",
+      access_token = NULL,
+      allow_remote = FALSE
+    )
+  )
+  expect_true(
+    check_dashboard_launch_security(
+      host = "0.0.0.0",
+      access_token = "secret-token",
+      allow_remote = FALSE
+    )
+  )
+  expect_error(
+    check_dashboard_launch_security(
+      host = "0.0.0.0",
+      access_token = NULL,
+      allow_remote = FALSE
+    ),
+    "Refusing to run the dashboard"
+  )
+})

@@ -285,10 +285,112 @@ dashboard_data_from_path <- function(db_path,
   )
 }
 
+resolve_dashboard_access_token <- function(access_token = NULL,
+                                           token_envvar = "LEARNRTRACKR_DASHBOARD_TOKEN") {
+  access_token <- validate_scalar_character(
+    access_token,
+    arg = "access_token",
+    allow_null = TRUE
+  )
+  token_envvar <- validate_scalar_character(
+    token_envvar,
+    arg = "token_envvar",
+    allow_null = TRUE
+  )
+
+  if (!is.null(access_token)) {
+    return(access_token)
+  }
+
+  if (is.null(token_envvar)) {
+    return(NULL)
+  }
+
+  env_token <- Sys.getenv(token_envvar, unset = "")
+
+  if (!nzchar(env_token)) {
+    return(NULL)
+  }
+
+  env_token
+}
+
+validate_dashboard_host <- function(host) {
+  validate_scalar_character(host, arg = "host")
+}
+
+is_local_dashboard_host <- function(host) {
+  host %in% c("127.0.0.1", "localhost", "::1")
+}
+
+check_dashboard_launch_security <- function(host,
+                                            access_token,
+                                            allow_remote) {
+  host <- validate_dashboard_host(host)
+  allow_remote <- validate_scalar_logical(allow_remote, arg = "allow_remote")
+
+  if (
+    !is_local_dashboard_host(host) &&
+      is.null(access_token) &&
+      !allow_remote
+  ) {
+    cli::cli_abort(c(
+      "Refusing to run the dashboard on a non-local host without an access token.",
+      "i" = "Use {.code host = \"127.0.0.1\"} for local use.",
+      "i" = "Set {.arg access_token} or {.envvar LEARNRTRACKR_DASHBOARD_TOKEN} before allowing remote access.",
+      "i" = "Set {.code allow_remote = TRUE} only for an explicitly managed environment."
+    ))
+  }
+
+  invisible(TRUE)
+}
+
+dashboard_main_ui <- function(choices,
+                              selected,
+                              rule,
+                              include_unregistered) {
+  shiny::sidebarLayout(
+    shiny::sidebarPanel(
+      shiny::selectInput(
+        "tutorial_id",
+        "Tutorial",
+        choices = choices,
+        selected = selected
+      ),
+      shiny::selectInput(
+        "rule",
+        "Scoring rule",
+        choices = c("last", "best", "first"),
+        selected = rule
+      ),
+      shiny::checkboxInput(
+        "include_unregistered",
+        "Include unregistered attempted questions",
+        value = include_unregistered
+      ),
+      shiny::actionButton("refresh", "Refresh"),
+      shiny::hr(),
+      shiny::downloadButton("download_gradebook", "Download gradebook"),
+      shiny::downloadButton("download_moodle", "Download Moodle CSV")
+    ),
+    shiny::mainPanel(
+      shiny::h3("Summary"),
+      shiny::tableOutput("summary"),
+      shiny::h3("Gradebook"),
+      shiny::tableOutput("gradebook"),
+      shiny::h3("Questions"),
+      shiny::tableOutput("questions"),
+      shiny::h3("Attempts"),
+      shiny::tableOutput("attempts")
+    )
+  )
+}
+
 dashboard_app <- function(db_path,
                           tutorial_id = NULL,
                           rule = "last",
-                          include_unregistered = TRUE) {
+                          include_unregistered = TRUE,
+                          access_token = NULL) {
   if (!requireNamespace("shiny", quietly = TRUE)) {
     cli::cli_abort(
       "Package {.pkg shiny} is required to use {.fn run_dashboard}."
@@ -308,47 +410,59 @@ dashboard_app <- function(db_path,
     selected <- choices[[1]]
   }
 
+  dashboard_ui <- dashboard_main_ui(
+    choices = choices,
+    selected = selected,
+    rule = rule,
+    include_unregistered = include_unregistered
+  )
+
   ui <- shiny::fluidPage(
     shiny::titlePanel("learnrTrackR teacher dashboard"),
-    shiny::sidebarLayout(
-      shiny::sidebarPanel(
-        shiny::selectInput(
-          "tutorial_id",
-          "Tutorial",
-          choices = choices,
-          selected = selected
-        ),
-        shiny::selectInput(
-          "rule",
-          "Scoring rule",
-          choices = c("last", "best", "first"),
-          selected = rule
-        ),
-        shiny::checkboxInput(
-          "include_unregistered",
-          "Include unregistered attempted questions",
-          value = include_unregistered
-        ),
-        shiny::actionButton("refresh", "Refresh"),
-        shiny::hr(),
-        shiny::downloadButton("download_gradebook", "Download gradebook"),
-        shiny::downloadButton("download_moodle", "Download Moodle CSV")
-      ),
-      shiny::mainPanel(
-        shiny::h3("Summary"),
-        shiny::tableOutput("summary"),
-        shiny::h3("Gradebook"),
-        shiny::tableOutput("gradebook"),
-        shiny::h3("Questions"),
-        shiny::tableOutput("questions"),
-        shiny::h3("Attempts"),
-        shiny::tableOutput("attempts")
-      )
-    )
+    if (is.null(access_token)) {
+      dashboard_ui
+    } else {
+      shiny::uiOutput("dashboard_access")
+    }
   )
 
   server <- function(input, output, session) {
+    authorized <- shiny::reactiveVal(is.null(access_token))
+    auth_message <- shiny::reactiveVal(NULL)
+
+    output$dashboard_access <- shiny::renderUI({
+      if (isTRUE(authorized())) {
+        return(dashboard_ui)
+      }
+
+      shiny::tagList(
+        shiny::passwordInput("dashboard_token", "Dashboard token"),
+        shiny::actionButton("dashboard_login", "Open dashboard"),
+        shiny::uiOutput("dashboard_auth_message")
+      )
+    })
+
+    output$dashboard_auth_message <- shiny::renderUI({
+      message <- auth_message()
+
+      if (is.null(message)) {
+        return(NULL)
+      }
+
+      shiny::tags$p(message)
+    })
+
+    shiny::observeEvent(input$dashboard_login, {
+      if (identical(input$dashboard_token, access_token)) {
+        authorized(TRUE)
+        auth_message(NULL)
+      } else {
+        auth_message("Invalid dashboard token.")
+      }
+    })
+
     current_data <- shiny::reactive({
+      shiny::req(authorized())
       input$refresh
 
       dashboard_data_from_path(
@@ -407,6 +521,14 @@ dashboard_app <- function(db_path,
 #' @param rule Scoring rule passed to [gradebook()].
 #' @param include_unregistered If `TRUE`, include attempted questions that were
 #'   not registered with [register_questions()].
+#' @param host Host passed to [shiny::runApp()]. Defaults to `"127.0.0.1"` for
+#'   local-only use.
+#' @param access_token Optional dashboard token. If supplied, the dashboard asks
+#'   for this token before showing data.
+#' @param token_envvar Environment variable used to read a dashboard token when
+#'   `access_token` is `NULL`. Set to `NULL` to disable environment lookup.
+#' @param allow_remote If `FALSE`, refuse to run on a non-local host unless an
+#'   access token is configured.
 #' @param ... Additional arguments passed to [shiny::runApp()].
 #'
 #' @return The return value of [shiny::runApp()].
@@ -421,6 +543,10 @@ run_dashboard <- function(db_path,
                           tutorial_id = NULL,
                           rule = c("last", "best", "first"),
                           include_unregistered = TRUE,
+                          host = "127.0.0.1",
+                          access_token = NULL,
+                          token_envvar = "LEARNRTRACKR_DASHBOARD_TOKEN",
+                          allow_remote = FALSE,
                           ...) {
   if (!requireNamespace("shiny", quietly = TRUE)) {
     cli::cli_abort(
@@ -439,13 +565,29 @@ run_dashboard <- function(db_path,
     include_unregistered,
     arg = "include_unregistered"
   )
+  host <- validate_dashboard_host(host)
+  access_token <- resolve_dashboard_access_token(
+    access_token = access_token,
+    token_envvar = token_envvar
+  )
+  allow_remote <- validate_scalar_logical(
+    allow_remote,
+    arg = "allow_remote"
+  )
+
+  check_dashboard_launch_security(
+    host = host,
+    access_token = access_token,
+    allow_remote = allow_remote
+  )
 
   app <- dashboard_app(
     db_path = db_path,
     tutorial_id = tutorial_id,
     rule = rule,
-    include_unregistered = include_unregistered
+    include_unregistered = include_unregistered,
+    access_token = access_token
   )
 
-  shiny::runApp(app, ...)
+  shiny::runApp(app, host = host, ...)
 }
