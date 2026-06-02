@@ -1,0 +1,6 @@
+tutorial_id,question_id,question_label,question_type,max_score
+minimal_learnr,q1_multiple_choice,"Mean of 2, 4, and 6",radio,1
+minimal_learnr,q2_text_station,Colder station,text,1
+minimal_learnr,q3_numeric_rows,Number of data rows,numeric,1
+minimal_learnr,q2_mean_temperature,Mean temperature code exercise,code,1
+minimal_learnr,q3_summarise_temperature,Station summary code exercise,code,1

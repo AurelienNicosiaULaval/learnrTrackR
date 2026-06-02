@@ -67,6 +67,13 @@ export_moodle_grades(
   grade_item = "Module 01 quiz"
 )
 
+export_tracking_bundle(
+  con,
+  tempfile(),
+  tutorial_id = "module_01",
+  group_id = "A"
+)
+
 # Open the local teacher dashboard interactively.
 # run_dashboard(db_path)
 

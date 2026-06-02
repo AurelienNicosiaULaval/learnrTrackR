@@ -1,0 +1,145 @@
+---
+title: "Teacher workflow with learnrTrackR"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Teacher workflow with learnrTrackR}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+This vignette shows a minimal teacher workflow: declare course metadata,
+tutorial metadata, students, and expected questions; record attempts; inspect
+group-level results; and export CSV files.
+
+## Create a configuration directory
+
+```{r config}
+library(learnrTrackR)
+
+config_dir <- tempfile()
+dir.create(config_dir)
+
+readr::write_csv(
+  data.frame(
+    course_id = "stat101",
+    course_label = "Statistics 101",
+    semester = "W2026"
+  ),
+  file.path(config_dir, "courses.csv")
+)
+
+readr::write_csv(
+  data.frame(
+    tutorial_id = "module_01",
+    course_id = "stat101",
+    tutorial_label = "Module 1",
+    version = "0.0.1"
+  ),
+  file.path(config_dir, "tutorials.csv")
+)
+
+readr::write_csv(
+  data.frame(
+    student_id = c("student_001", "student_002", "student_003"),
+    student_label = c("Student 1", "Student 2", "Student 3"),
+    group_id = c("A", "A", "B")
+  ),
+  file.path(config_dir, "students.csv")
+)
+
+readr::write_csv(
+  data.frame(
+    tutorial_id = "module_01",
+    question_id = c("q1", "q2"),
+    question_label = c("Mean exercise", "Summary exercise"),
+    question_type = c("code", "code"),
+    max_score = c(1, 1)
+  ),
+  file.path(config_dir, "questions.csv")
+)
+```
+
+The same fields can also be represented in a YAML file and read with
+`read_tracking_config()` when the `yaml` package is installed.
+
+## Load the configuration
+
+```{r load-config}
+db_path <- tempfile(fileext = ".sqlite")
+con <- init_tracking_db(db_path, overwrite = TRUE)
+
+load_tracking_config(con, config_dir)
+```
+
+## Record attempts
+
+```{r attempts}
+track_attempt(
+  con,
+  student_id = "student_001",
+  tutorial_id = "module_01",
+  question_id = "q1",
+  submitted_answer = "mean(x)",
+  grade_status = "correct",
+  score = 1,
+  max_score = 1,
+  require_registered_student = TRUE
+)
+
+track_attempt(
+  con,
+  student_id = "student_002",
+  tutorial_id = "module_01",
+  question_id = "q1",
+  submitted_answer = "sd(x)",
+  grade_status = "incorrect",
+  score = 0,
+  max_score = 1,
+  require_registered_student = TRUE
+)
+```
+
+## Inspect group results
+
+```{r dashboard-data}
+group_a <- dashboard_data(
+  con,
+  tutorial_id = "module_01",
+  group_id = "A",
+  rule = "last"
+)
+
+group_a$summary
+group_a$students
+group_a$gradebook
+```
+
+## Export teaching files
+
+```{r export}
+export_dir <- tempfile()
+exported <- export_tracking_bundle(
+  con,
+  export_dir,
+  tutorial_id = "module_01",
+  group_id = "A",
+  rule = "last"
+)
+
+exported
+file.exists(exported$path)
+```
+
+The bundle contains summary, students, attempts, scores, gradebook, questions,
+and Moodle-ready grade CSV files.
+
+```{r cleanup, include = FALSE}
+DBI::dbDisconnect(con)
+```

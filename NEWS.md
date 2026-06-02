@@ -22,3 +22,8 @@
   attempts.
 - Added student metadata display and registered-group filtering to the teacher
   dashboard and its CSV downloads.
+- Added course and tutorial registration helpers.
+- Added YAML and CSV tracking configuration loading.
+- Added rich teacher export bundles filtered by group or student.
+- Added a teacher workflow vignette and updated the minimal `learnr` example to
+  use configuration and registered students.

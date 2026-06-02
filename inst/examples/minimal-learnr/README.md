@@ -1,6 +1,6 @@
 # Minimal learnr tracking example
 
-This directory contains a minimal `learnr` prototype for `learnrTrackR`.
+This directory contains a minimal `learnr` example for `learnrTrackR`.
 
 It uses two explicit tracking strategies:
 
@@ -11,6 +11,14 @@ It uses two explicit tracking strategies:
 
 Both strategies avoid relying on internal `learnr` JavaScript implementation
 details.
+
+The example also includes declarative tracking configuration files:
+
+- `config/tracking.yml`
+- `config-csv/courses.csv`
+- `config-csv/tutorials.csv`
+- `config-csv/students.csv`
+- `config-csv/questions.csv`
 
 ## Run the tutorial
 
@@ -25,7 +33,8 @@ Then run the tutorial:
 ```r
 Sys.setenv(
   LEARNRTRACKR_DB = file.path(tempdir(), "learnrtrackr-minimal.sqlite"),
-  LEARNRTRACKR_STUDENT_ID = "student_demo"
+  LEARNRTRACKR_STUDENT_ID = "student_demo",
+  LEARNRTRACKR_GROUP_ID = "demo_group"
 )
 
 learnr::run_tutorial(
@@ -37,7 +46,9 @@ learnr::run_tutorial(
 
 The `LEARNRTRACKR_STUDENT_ID` value is required. The tutorial uses
 `get_tracking_student_id()` and stops with an informative error if the variable
-is missing or empty.
+is missing or empty. The tutorial registers the current learner with
+`register_students()` and loads the expected course, tutorial, student, and
+question metadata from the CSV configuration directory.
 
 If the package is installed, the tutorial path can be found with:
 
@@ -59,8 +70,17 @@ You can also inspect the same database with the teacher dashboard:
 learnrTrackR::run_dashboard(Sys.getenv("LEARNRTRACKR_DB"))
 ```
 
+To open the dashboard with the group selected:
+
+```r
+learnrTrackR::run_dashboard(
+  Sys.getenv("LEARNRTRACKR_DB"),
+  group_id = Sys.getenv("LEARNRTRACKR_GROUP_ID")
+)
+```
+
 ## Current limitation
 
-This prototype tracks the four built-in `learnr` question types covered by
+This example tracks the four built-in `learnr` question types covered by
 `tracked_question()`: radio, checkbox, text, and numeric. Custom question types
 are not covered yet.

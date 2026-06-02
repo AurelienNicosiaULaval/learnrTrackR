@@ -14,8 +14,9 @@ knitr::opts_chunk$set(
 )
 ```
 
-`learnrTrackR` currently provides a small SQLite layer for simulated tutorial
-attempts. It does not yet connect directly to `learnr` or `gradethis`.
+`learnrTrackR` provides a small SQLite layer for tutorial attempt tracking,
+registered students, registered questions, gradebook exports, and minimal
+`learnr` integration helpers.
 
 ## Create a database
 
@@ -28,8 +29,20 @@ con <- init_tracking_db(db_path, overwrite = TRUE)
 
 ## Register expected questions
 
-Registered questions define the denominator used by `gradebook()`. In this
-example, `q3` is expected but not answered.
+Registered students provide a local roster for filtering and optional
+student-id checks. Registered questions define the denominator used by
+`gradebook()`. In this example, `q3` is expected but not answered.
+
+```{r roster}
+register_students(
+  con,
+  data.frame(
+    student_id = c("student_001", "student_002"),
+    student_label = c("Student 1", "Student 2"),
+    group_id = c("A", "A")
+  )
+)
+```
 
 ```{r questions}
 register_questions(
@@ -54,7 +67,8 @@ track_attempt(
   grade_status = "correct",
   score = 1,
   max_score = 1,
-  feedback = "Correct."
+  feedback = "Correct.",
+  require_registered_student = TRUE
 )
 
 track_attempt(
@@ -109,6 +123,20 @@ export_moodle_grades(
 )
 
 file.exists(c(attempts_path, scores_path, gradebook_path, moodle_path))
+```
+
+## Export a richer teaching bundle
+
+```{r export-bundle}
+bundle_dir <- tempfile()
+bundle_paths <- export_tracking_bundle(
+  con,
+  bundle_dir,
+  tutorial_id = "module_01",
+  group_id = "A"
+)
+
+bundle_paths
 ```
 
 ```{r cleanup, include = FALSE}

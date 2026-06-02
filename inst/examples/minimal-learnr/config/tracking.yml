@@ -1,0 +1,44 @@
+courses:
+  - course_id: demo_course
+    course_label: Demo course
+    semester: demo
+tutorials:
+  - tutorial_id: minimal_learnr
+    course_id: demo_course
+    tutorial_label: Minimal tracked learnr tutorial
+    version: "0.0.1"
+students:
+  - student_id: student_demo
+    student_label: Student Demo
+    email:
+    group_id: demo_group
+  - student_id: student_peer
+    student_label: Student Peer
+    email:
+    group_id: demo_group
+questions:
+  - tutorial_id: minimal_learnr
+    question_id: q1_multiple_choice
+    question_label: Mean of 2, 4, and 6
+    question_type: radio
+    max_score: 1
+  - tutorial_id: minimal_learnr
+    question_id: q2_text_station
+    question_label: Colder station
+    question_type: text
+    max_score: 1
+  - tutorial_id: minimal_learnr
+    question_id: q3_numeric_rows
+    question_label: Number of data rows
+    question_type: numeric
+    max_score: 1
+  - tutorial_id: minimal_learnr
+    question_id: q2_mean_temperature
+    question_label: Mean temperature code exercise
+    question_type: code
+    max_score: 1
+  - tutorial_id: minimal_learnr
+    question_id: q3_summarise_temperature
+    question_label: Station summary code exercise
+    question_type: code
+    max_score: 1

@@ -20,9 +20,14 @@ knitr::opts_chunk$set(echo = FALSE)
 
 tutorial_id <- "minimal_learnr"
 student_id <- learnrTrackR::get_tracking_student_id()
+student_group_id <- Sys.getenv("LEARNRTRACKR_GROUP_ID", unset = "demo_group")
 tracking_db_path <- Sys.getenv(
   "LEARNRTRACKR_DB",
   unset = file.path(tempdir(), "learnrtrackr-minimal.sqlite")
+)
+tracking_config_dir <- system.file(
+  "examples/minimal-learnr/config-csv",
+  package = "learnrTrackR"
 )
 
 open_tracking_db <- function() {
@@ -39,26 +44,38 @@ quebec_temperatures <- tibble::tibble(
 )
 
 setup_con <- open_tracking_db()
-learnrTrackR::register_questions(
+if (nzchar(tracking_config_dir)) {
+  learnrTrackR::load_tracking_config(setup_con, tracking_config_dir)
+} else {
+  learnrTrackR::register_questions(
+    setup_con,
+    tutorial_id = tutorial_id,
+    questions = tibble::tibble(
+      question_id = c(
+        "q1_multiple_choice",
+        "q2_text_station",
+        "q3_numeric_rows",
+        "q2_mean_temperature",
+        "q3_summarise_temperature"
+      ),
+      question_label = c(
+        "Mean of 2, 4, and 6",
+        "Colder station",
+        "Number of data rows",
+        "Mean temperature code exercise",
+        "Station summary code exercise"
+      ),
+      question_type = c("radio", "text", "numeric", "code", "code"),
+      max_score = c(1, 1, 1, 1, 1)
+    )
+  )
+}
+learnrTrackR::register_students(
   setup_con,
-  tutorial_id = tutorial_id,
-  questions = tibble::tibble(
-    question_id = c(
-      "q1_multiple_choice",
-      "q2_text_station",
-      "q3_numeric_rows",
-      "q2_mean_temperature",
-      "q3_summarise_temperature"
-    ),
-    question_label = c(
-      "Mean of 2, 4, and 6",
-      "Colder station",
-      "Number of data rows",
-      "Mean temperature code exercise",
-      "Station summary code exercise"
-    ),
-    question_type = c("radio", "text", "numeric", "code", "code"),
-    max_score = c(1, 1, 1, 1, 1)
+  tibble::tibble(
+    student_id = student_id,
+    student_label = student_id,
+    group_id = student_group_id
   )
 )
 DBI::dbDisconnect(setup_con)
@@ -66,15 +83,17 @@ DBI::dbDisconnect(setup_con)
 
 ## Identification
 
-For this prototype, the learner is identified by the environment variable
+For this example, the learner is identified by the environment variable
 `LEARNRTRACKR_STUDENT_ID`. The tutorial stops with a clear error if this
 identifier is not set before launch.
 
 ```{r show-student}
 tibble::tibble(
   student_id = student_id,
+  group_id = student_group_id,
   tutorial_id = tutorial_id,
-  tracking_db_path = tracking_db_path
+  tracking_db_path = tracking_db_path,
+  tracking_config_dir = tracking_config_dir
 )
 ```
 

@@ -159,3 +159,64 @@ test_that("export_moodle_grades writes a Moodle-ready CSV", {
   expect_equal(names(grades), c("useridnumber", "Module 01 quiz"))
   expect_equal(grades[["Module 01 quiz"]], 50)
 })
+
+test_that("tracking_export_data filters by group and student", {
+  db_path <- withr::local_tempfile(fileext = ".sqlite")
+  con <- init_tracking_db(db_path, overwrite = TRUE)
+  withr::defer(DBI::dbDisconnect(con))
+
+  register_students(
+    con,
+    data.frame(
+      student_id = c("student_001", "student_002", "student_003"),
+      group_id = c("A", "B", "A")
+    )
+  )
+  register_questions(con, "module_01", c("q1", "q2"))
+  track_attempt(con, "student_001", "module_01", "q1", "mean(x)", score = 1, max_score = 1)
+  track_attempt(con, "student_002", "module_01", "q1", "sd(x)", score = 0, max_score = 1)
+
+  group_data <- tracking_export_data(con, tutorial_id = "module_01", group_id = "A")
+  student_data <- tracking_export_data(
+    con,
+    tutorial_id = "module_01",
+    student_id = "student_001"
+  )
+
+  expect_equal(group_data$students$student_id, c("student_001", "student_003"))
+  expect_equal(group_data$attempts$student_id, "student_001")
+  expect_equal(nrow(group_data$gradebook), 2)
+  expect_equal(nrow(group_data$moodle_grades), 2)
+  expect_equal(student_data$students$student_id, "student_001")
+  expect_equal(nrow(student_data$gradebook), 1)
+})
+
+test_that("export_tracking_bundle writes all rich CSV files", {
+  db_path <- withr::local_tempfile(fileext = ".sqlite")
+  out_dir <- withr::local_tempdir()
+  con <- init_tracking_db(db_path, overwrite = TRUE)
+  withr::defer(DBI::dbDisconnect(con))
+
+  register_students(con, data.frame(student_id = "student_001", group_id = "A"))
+  register_questions(con, "module_01", c("q1", "q2"))
+  track_attempt(con, "student_001", "module_01", "q1", "mean(x)", score = 1, max_score = 1)
+
+  paths <- export_tracking_bundle(
+    con,
+    out_dir,
+    tutorial_id = "module_01",
+    group_id = "A"
+  )
+
+  expect_true(all(file.exists(paths$path)))
+  expect_equal(
+    paths$table,
+    c("summary", "students", "attempts", "scores", "gradebook", "questions", "moodle_grades")
+  )
+
+  gradebook_path <- paths$path[paths$table == "gradebook"]
+  grades <- readr::read_csv(gradebook_path, show_col_types = FALSE)
+
+  expect_equal(nrow(grades), 1)
+  expect_true("group_id" %in% names(grades))
+})

@@ -24,13 +24,17 @@ store simulated attempts and export results for inspection.
 - Create a SQLite tracking database.
 - Create the required schema.
 - Record simulated attempts.
+- Register courses and tutorials.
 - Register expected student identifiers.
 - Register expected tutorial questions.
+- Load course, tutorial, student, and question metadata from YAML or CSV
+  configuration files.
 - Read and filter attempts.
 - Compute simple scores using first, last, or best attempt rules.
 - Build a gradebook that counts unanswered registered questions.
 - Export attempts or scores to CSV.
 - Export a simple Moodle-ready CSV grade table.
+- Export rich CSV bundles for a tutorial, group, or student.
 - Open a minimal local Shiny teacher dashboard.
 - Filter dashboard tables and dashboard CSV exports by registered group.
 - Provide a minimal example and unit tests.
@@ -77,6 +81,24 @@ register_students(
     student_id = c("student_001", "student_002"),
     student_label = c("Student 1", "Student 2"),
     group_id = c("A", "A")
+  )
+)
+
+register_courses(
+  con,
+  data.frame(
+    course_id = "stat101",
+    course_label = "Statistics 101",
+    semester = "W2026"
+  )
+)
+
+register_tutorials(
+  con,
+  data.frame(
+    tutorial_id = "module_01",
+    course_id = "stat101",
+    tutorial_label = "Module 01"
   )
 )
 
@@ -132,6 +154,12 @@ export_moodle_grades(
   tutorial_id = "module_01",
   grade_item = "Module 01 quiz"
 )
+export_tracking_bundle(
+  con,
+  tempfile(),
+  tutorial_id = "module_01",
+  group_id = "A"
+)
 
 DBI::dbDisconnect(con)
 ```
@@ -161,6 +189,28 @@ Running on a non-local host without a token is refused by default. The token
 gate is intended for local inspection and small prototypes. It is not a secured
 production deployment interface and does not replace institutional
 authentication.
+
+## Teacher configuration
+
+Course, tutorial, student, and question metadata can be declared in YAML or in
+a directory of CSV files:
+
+```text
+config/
+  courses.csv
+  tutorials.csv
+  students.csv
+  questions.csv
+```
+
+Then load the configuration into the tracking database:
+
+```r
+load_tracking_config(con, "config")
+```
+
+The minimal `learnr` example includes both a YAML configuration file and a CSV
+configuration directory.
 
 ## Short roadmap
 
@@ -224,6 +274,11 @@ when it is missing.
 Expected student identifiers can be stored with `register_students()`. Attempts
 can then require a registered identifier by setting
 `require_registered_student = TRUE` in `track_attempt()`.
+
+`export_tracking_bundle()` writes richer teacher-facing CSV files, including
+students, attempts, scores, gradebook rows, question metadata, summary metrics,
+and Moodle-ready grades. The export can be filtered by `group_id` or
+`student_id`.
 
 `export_moodle_grades()` writes a compact CSV with one student identifier column
 and one grade item column. Moodle then asks the teacher to map these columns to
