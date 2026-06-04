@@ -342,6 +342,12 @@ Use `setup_learnr_tracking()` in a tutorial setup chunk to initialize the
 database, load configuration, register the current learner, and pass the
 returned context to tracked questions.
 
+For a compact guide to this workflow, see:
+
+```r
+vignette("learnr-context", package = "learnrTrackR")
+```
+
 Student identity is read with `get_tracking_student_id()`, which checks the
 `LEARNRTRACKR_STUDENT_ID` environment variable and throws an informative error
 when it is missing.

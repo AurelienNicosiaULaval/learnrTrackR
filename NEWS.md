@@ -4,6 +4,7 @@
   explicit `learnr` tutorial setup.
 - Allowed tracked `learnr` questions and `track_gradethis_attempt()` to use a
   reusable tracking context.
+- Added a vignette documenting the reusable `learnr` tracking context workflow.
 
 # learnrTrackR 0.1.0
 

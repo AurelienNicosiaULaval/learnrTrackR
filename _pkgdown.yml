@@ -9,6 +9,7 @@ articles:
   navbar: Workflows
   contents:
   - getting-started
+  - learnr-context
   - teacher-workflow
   - moodle-export
   - deployment-postgresql
