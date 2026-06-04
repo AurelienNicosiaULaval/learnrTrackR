@@ -34,3 +34,4 @@
 - Added privacy utilities and a repository privacy guide for student data.
 - Added pedagogical analytics helpers for question summaries, student
   summaries, difficult-question detection, and stalled-student detection.
+- Added HTML teacher report generation.

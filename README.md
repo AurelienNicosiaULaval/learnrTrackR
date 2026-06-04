@@ -276,6 +276,7 @@ summarise_questions(con, "module_01")
 summarise_students(con, "module_01")
 detect_difficult_questions(con, "module_01")
 detect_stalled_students(con, "module_01")
+generate_teacher_report(con, "teacher-report.html", "module_01")
 ```
 
 These helpers use the same scoring rules as `gradebook()` and can be filtered
