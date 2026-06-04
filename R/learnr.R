@@ -21,6 +21,9 @@
 #' @param session_id Optional session identifier passed to [track_attempt()].
 #' @param attempt_number Optional attempt number passed to [track_attempt()].
 #' @param timestamp Attempt timestamp. Defaults to `Sys.time()`.
+#' @param context Optional context returned by [setup_learnr_tracking()]. If
+#'   supplied, `student_id`, `tutorial_id`, and the database connection can be
+#'   resolved from the context.
 #'
 #' @return A `gradethis_graded` object returned by `gradethis::graded()`.
 #' @export
@@ -41,6 +44,19 @@
 #'   )
 #'
 #'   DBI::dbDisconnect(con)
+#'
+#'   tracking <- setup_learnr_tracking(
+#'     tutorial_id = "module_01",
+#'     student_id = "student_001",
+#'     db_path = db_path
+#'   )
+#'
+#'   track_gradethis_attempt(
+#'     context = tracking,
+#'     question_id = "q2",
+#'     submitted_answer = "mean(x)",
+#'     correct = FALSE
+#'   )
 #' }
 track_gradethis_attempt <- function(con,
                                     student_id,
@@ -54,11 +70,45 @@ track_gradethis_attempt <- function(con,
                                     grade_status = NULL,
                                     session_id = NULL,
                                     attempt_number = NULL,
-                                    timestamp = Sys.time()) {
+                                    timestamp = Sys.time(),
+                                    context = NULL) {
   if (!requireNamespace("gradethis", quietly = TRUE)) {
     cli::cli_abort(
       "Package {.pkg gradethis} is required to use {.fn track_gradethis_attempt}."
     )
+  }
+
+  context <- validate_learnr_tracking_context(context, allow_null = TRUE)
+  con_missing <- missing(con) || is.null(con)
+
+  student_id <- learnr_context_value(
+    context = context,
+    name = "student_id",
+    value = if (missing(student_id)) NULL else student_id,
+    is_missing = missing(student_id),
+    arg = "student_id"
+  )
+  tutorial_id <- learnr_context_value(
+    context = context,
+    name = "tutorial_id",
+    value = if (missing(tutorial_id)) NULL else tutorial_id,
+    is_missing = missing(tutorial_id),
+    arg = "tutorial_id"
+  )
+
+  student_id <- validate_scalar_character(student_id, arg = "student_id")
+  tutorial_id <- validate_scalar_character(tutorial_id, arg = "tutorial_id")
+  question_id <- validate_scalar_character(question_id, arg = "question_id")
+
+  if (con_missing) {
+    if (is.null(context)) {
+      cli::cli_abort(
+        "{.arg con} is required unless {.arg context} provides a tracking database."
+      )
+    }
+
+    con <- open_learnr_tracking_db(context)
+    on.exit(DBI::dbDisconnect(con), add = TRUE)
   }
 
   correct <- validate_scalar_logical(correct, arg = "correct")
@@ -111,11 +161,119 @@ track_gradethis_attempt <- function(con,
   )
 }
 
-validate_learnr_tracking_config <- function(student_id,
-                                            tutorial_id,
-                                            question_id,
-                                            db_path,
-                                            max_score) {
+validate_learnr_tracking_context <- function(context, allow_null = FALSE) {
+  if (is.null(context)) {
+    if (allow_null) {
+      return(NULL)
+    }
+
+    cli::cli_abort("{.arg context} must not be NULL.")
+  }
+
+  if (!is.list(context)) {
+    cli::cli_abort(
+      "{.arg context} must be a list returned by {.fn setup_learnr_tracking}."
+    )
+  }
+
+  required <- c("student_id", "tutorial_id", "db_path")
+  missing_fields <- setdiff(required, names(context))
+
+  if (length(missing_fields) > 0) {
+    cli::cli_abort(c(
+      "{.arg context} is missing required field{?s}.",
+      "x" = "Missing field{?s}: {.field {missing_fields}}."
+    ))
+  }
+
+  group_id <- context$group_id
+  if (is.null(group_id)) {
+    group_id <- NA_character_
+  }
+
+  config_path <- context$config_path
+  if (is.null(config_path)) {
+    config_path <- NA_character_
+  }
+
+  structure(
+    list(
+      student_id = validate_scalar_character(
+        context$student_id,
+        arg = "context$student_id"
+      ),
+      tutorial_id = validate_scalar_character(
+        context$tutorial_id,
+        arg = "context$tutorial_id"
+      ),
+      db_path = validate_path(context$db_path, arg = "context$db_path"),
+      group_id = validate_scalar_character(
+        group_id,
+        arg = "context$group_id",
+        allow_na = TRUE,
+        allow_empty = TRUE
+      ),
+      config_path = validate_scalar_character(
+        config_path,
+        arg = "context$config_path",
+        allow_na = TRUE
+      )
+    ),
+    class = "learnrTrackR_context"
+  )
+}
+
+learnr_context_value <- function(context,
+                                 name,
+                                 value,
+                                 is_missing,
+                                 arg) {
+  if (!is_missing && !is.null(value)) {
+    return(value)
+  }
+
+  if (!is.null(context)) {
+    return(context[[name]])
+  }
+
+  cli::cli_abort(
+    "{.arg {arg}} is required unless {.arg context} provides it."
+  )
+}
+
+resolve_learnr_tracking_config <- function(context,
+                                           student_id,
+                                           student_id_missing,
+                                           tutorial_id,
+                                           tutorial_id_missing,
+                                           question_id,
+                                           db_path,
+                                           db_path_missing,
+                                           max_score) {
+  context <- validate_learnr_tracking_context(context, allow_null = TRUE)
+
+  student_id <- learnr_context_value(
+    context = context,
+    name = "student_id",
+    value = student_id,
+    is_missing = student_id_missing,
+    arg = "student_id"
+  )
+  tutorial_id <- learnr_context_value(
+    context = context,
+    name = "tutorial_id",
+    value = tutorial_id,
+    is_missing = tutorial_id_missing,
+    arg = "tutorial_id"
+  )
+  db_path <- learnr_context_value(
+    context = context,
+    name = "db_path",
+    value = db_path,
+    is_missing = db_path_missing,
+    arg = "db_path"
+  )
+
   list(
     student_id = validate_scalar_character(student_id, arg = "student_id"),
     tutorial_id = validate_scalar_character(tutorial_id, arg = "tutorial_id"),
@@ -123,6 +281,149 @@ validate_learnr_tracking_config <- function(student_id,
     db_path = validate_path(db_path, arg = "db_path"),
     max_score = validate_scalar_numeric(max_score, arg = "max_score")
   )
+}
+
+#' Set up tracking for a learnr tutorial
+#'
+#' Initializes the tracking database, optionally loads a tracking configuration,
+#' registers the current learner, and returns a small context object. The context
+#' can then be passed to [tracked_question()], [tracked_question_radio()],
+#' [tracked_question_checkbox()], [tracked_question_text()],
+#' [tracked_question_numeric()], [track_gradethis_attempt()], and
+#' [open_learnr_tracking_db()].
+#'
+#' This helper is intended for the setup chunk of a `learnr` tutorial. It keeps
+#' the tutorial code explicit while avoiding repeated `student_id`,
+#' `tutorial_id`, and `db_path` arguments in each tracked question.
+#'
+#' @param tutorial_id Tutorial identifier stored in the tracking database.
+#' @param student_id Student identifier. Defaults to [get_tracking_student_id()].
+#' @param db_path Path to the SQLite tracking database. Defaults to the
+#'   `LEARNRTRACKR_DB` environment variable, or a temporary SQLite file based on
+#'   `tutorial_id` when the variable is missing.
+#' @param group_id Optional learner group. Defaults to the
+#'   `LEARNRTRACKR_GROUP_ID` environment variable, or `NA_character_`.
+#' @param config_path Optional YAML file or CSV directory loaded with
+#'   [load_tracking_config()]. Use `NULL` to skip configuration loading.
+#' @param student_label Optional label for the current learner. Defaults to
+#'   `student_id`.
+#' @param overwrite If `TRUE`, remove an existing SQLite database before
+#'   initialization.
+#' @param register_student If `TRUE`, register the current learner in the
+#'   `students` table.
+#'
+#' @return A `learnrTrackR_context` list with `student_id`, `tutorial_id`,
+#'   `db_path`, `group_id`, and `config_path`.
+#' @export
+#'
+#' @examples
+#' db_path <- tempfile(fileext = ".sqlite")
+#' tracking <- setup_learnr_tracking(
+#'   tutorial_id = "module_01",
+#'   student_id = "student_001",
+#'   db_path = db_path
+#' )
+#'
+#' con <- open_learnr_tracking_db(tracking)
+#' DBI::dbDisconnect(con)
+setup_learnr_tracking <- function(tutorial_id,
+                                  student_id = get_tracking_student_id(),
+                                  db_path = Sys.getenv(
+                                    "LEARNRTRACKR_DB",
+                                    unset = file.path(
+                                      tempdir(),
+                                      paste0(tutorial_id, ".sqlite")
+                                    )
+                                  ),
+                                  group_id = Sys.getenv(
+                                    "LEARNRTRACKR_GROUP_ID",
+                                    unset = NA_character_
+                                  ),
+                                  config_path = NULL,
+                                  student_label = student_id,
+                                  overwrite = FALSE,
+                                  register_student = TRUE) {
+  tutorial_id <- validate_scalar_character(tutorial_id, arg = "tutorial_id")
+  student_id <- validate_scalar_character(student_id, arg = "student_id")
+  db_path <- validate_path(db_path, arg = "db_path")
+  group_id <- validate_scalar_character(
+    group_id,
+    arg = "group_id",
+    allow_na = TRUE,
+    allow_empty = TRUE
+  )
+  student_label <- validate_scalar_character(
+    student_label,
+    arg = "student_label",
+    allow_empty = TRUE
+  )
+  overwrite <- validate_scalar_logical(overwrite, arg = "overwrite")
+  register_student <- validate_scalar_logical(
+    register_student,
+    arg = "register_student"
+  )
+
+  if (!is.null(config_path) && !nzchar(config_path)) {
+    config_path <- NULL
+  }
+
+  if (!is.null(config_path)) {
+    config_path <- validate_path(config_path, arg = "config_path")
+  }
+
+  con <- init_tracking_db(db_path, overwrite = overwrite)
+  on.exit(DBI::dbDisconnect(con), add = TRUE)
+
+  if (!is.null(config_path)) {
+    load_tracking_config(con, config_path)
+  }
+
+  if (register_student) {
+    register_students(
+      con,
+      tibble::tibble(
+        student_id = student_id,
+        student_label = student_label,
+        group_id = group_id
+      )
+    )
+  }
+
+  validate_learnr_tracking_context(
+    list(
+      student_id = student_id,
+      tutorial_id = tutorial_id,
+      db_path = db_path,
+      group_id = group_id,
+      config_path = if (is.null(config_path)) NA_character_ else config_path
+    )
+  )
+}
+
+#' Open the tracking database for a learnr context
+#'
+#' Opens the SQLite tracking database referenced by a context returned by
+#' [setup_learnr_tracking()]. Missing schema objects are created idempotently
+#' through [init_tracking_db()].
+#'
+#' @param context A context returned by [setup_learnr_tracking()].
+#'
+#' @return A DBI connection.
+#' @export
+#'
+#' @examples
+#' db_path <- tempfile(fileext = ".sqlite")
+#' tracking <- setup_learnr_tracking(
+#'   tutorial_id = "module_01",
+#'   student_id = "student_001",
+#'   db_path = db_path
+#' )
+#'
+#' con <- open_learnr_tracking_db(tracking)
+#' DBI::dbDisconnect(con)
+open_learnr_tracking_db <- function(context) {
+  context <- validate_learnr_tracking_context(context)
+  init_tracking_db(context$db_path, overwrite = FALSE)
 }
 
 add_tracked_question_class <- function(question, class_name, tracking) {
@@ -202,6 +503,9 @@ normalize_tracked_question_type <- function(type, answers) {
 #' @param student_id Student identifier stored in the tracking database.
 #' @param db_path Path to the SQLite tracking database.
 #' @param max_score Maximum score stored for the question. Defaults to `1`.
+#' @param context Optional context returned by [setup_learnr_tracking()]. If
+#'   supplied, `student_id`, `tutorial_id`, and `db_path` are read from the
+#'   context unless explicitly provided.
 #'
 #' @return A tracked `learnr` question object.
 #' @export
@@ -218,6 +522,21 @@ normalize_tracked_question_type <- function(type, answers) {
 #'     tutorial_id = "module_01",
 #'     student_id = "student_001",
 #'     db_path = db_path
+#'   )
+#'
+#'   tracking <- setup_learnr_tracking(
+#'     tutorial_id = "module_01",
+#'     student_id = "student_001",
+#'     db_path = db_path
+#'   )
+#'
+#'   tracked_question(
+#'     "What is 3 + 3?",
+#'     learnr::answer("5"),
+#'     learnr::answer("6", correct = TRUE),
+#'     type = "radio",
+#'     question_id = "q2",
+#'     context = tracking
 #'   )
 #' }
 tracked_question <- function(text,
@@ -239,20 +558,32 @@ tracked_question <- function(text,
                              tutorial_id,
                              student_id,
                              db_path,
-                             max_score = 1) {
+                             max_score = 1,
+                             context = NULL) {
   answers <- list(...)
   type <- normalize_tracked_question_type(type, answers = answers)
+  tracking <- resolve_learnr_tracking_config(
+    context = context,
+    student_id = if (missing(student_id)) NULL else student_id,
+    student_id_missing = missing(student_id),
+    tutorial_id = if (missing(tutorial_id)) NULL else tutorial_id,
+    tutorial_id_missing = missing(tutorial_id),
+    question_id = question_id,
+    db_path = if (missing(db_path)) NULL else db_path,
+    db_path_missing = missing(db_path),
+    max_score = max_score
+  )
   args <- c(
     list(
       text = text
     ),
     answers,
     list(
-      question_id = question_id,
-      tutorial_id = tutorial_id,
-      student_id = student_id,
-      db_path = db_path,
-      max_score = max_score
+      question_id = tracking$question_id,
+      tutorial_id = tracking$tutorial_id,
+      student_id = tracking$student_id,
+      db_path = tracking$db_path,
+      max_score = tracking$max_score
     )
   )
 
@@ -282,6 +613,9 @@ tracked_question <- function(text,
 #' @param student_id Student identifier stored in the tracking database.
 #' @param db_path Path to the SQLite tracking database.
 #' @param max_score Maximum score stored for the question. Defaults to `1`.
+#' @param context Optional context returned by [setup_learnr_tracking()]. If
+#'   supplied, `student_id`, `tutorial_id`, and `db_path` are read from the
+#'   context unless explicitly provided.
 #'
 #' @return A `learnr` radio question object with tracking metadata.
 #' @export
@@ -305,18 +639,23 @@ tracked_question_radio <- function(text,
                                    tutorial_id,
                                    student_id,
                                    db_path,
-                                   max_score = 1) {
+                                   max_score = 1,
+                                   context = NULL) {
   if (!requireNamespace("learnr", quietly = TRUE)) {
     cli::cli_abort(
       "Package {.pkg learnr} is required to use {.fn tracked_question_radio}."
     )
   }
 
-  tracking <- validate_learnr_tracking_config(
-    student_id = student_id,
-    tutorial_id = tutorial_id,
+  tracking <- resolve_learnr_tracking_config(
+    context = context,
+    student_id = if (missing(student_id)) NULL else student_id,
+    student_id_missing = missing(student_id),
+    tutorial_id = if (missing(tutorial_id)) NULL else tutorial_id,
+    tutorial_id_missing = missing(tutorial_id),
     question_id = question_id,
-    db_path = db_path,
+    db_path = if (missing(db_path)) NULL else db_path,
+    db_path_missing = missing(db_path),
     max_score = max_score
   )
 
@@ -345,6 +684,9 @@ tracked_question_radio <- function(text,
 #' @param student_id Student identifier stored in the tracking database.
 #' @param db_path Path to the SQLite tracking database.
 #' @param max_score Maximum score stored for the question. Defaults to `1`.
+#' @param context Optional context returned by [setup_learnr_tracking()]. If
+#'   supplied, `student_id`, `tutorial_id`, and `db_path` are read from the
+#'   context unless explicitly provided.
 #'
 #' @return A `learnr` checkbox question object with tracking metadata.
 #' @export
@@ -369,18 +711,23 @@ tracked_question_checkbox <- function(text,
                                       tutorial_id,
                                       student_id,
                                       db_path,
-                                      max_score = 1) {
+                                      max_score = 1,
+                                      context = NULL) {
   if (!requireNamespace("learnr", quietly = TRUE)) {
     cli::cli_abort(
       "Package {.pkg learnr} is required to use {.fn tracked_question_checkbox}."
     )
   }
 
-  tracking <- validate_learnr_tracking_config(
-    student_id = student_id,
-    tutorial_id = tutorial_id,
+  tracking <- resolve_learnr_tracking_config(
+    context = context,
+    student_id = if (missing(student_id)) NULL else student_id,
+    student_id_missing = missing(student_id),
+    tutorial_id = if (missing(tutorial_id)) NULL else tutorial_id,
+    tutorial_id_missing = missing(tutorial_id),
     question_id = question_id,
-    db_path = db_path,
+    db_path = if (missing(db_path)) NULL else db_path,
+    db_path_missing = missing(db_path),
     max_score = max_score
   )
 
@@ -409,6 +756,9 @@ tracked_question_checkbox <- function(text,
 #' @param student_id Student identifier stored in the tracking database.
 #' @param db_path Path to the SQLite tracking database.
 #' @param max_score Maximum score stored for the question. Defaults to `1`.
+#' @param context Optional context returned by [setup_learnr_tracking()]. If
+#'   supplied, `student_id`, `tutorial_id`, and `db_path` are read from the
+#'   context unless explicitly provided.
 #' @param correct Text shown by `learnr` for a correct answer.
 #' @param incorrect Text shown by `learnr` for an incorrect answer.
 #' @param try_again Text shown by `learnr` for an incorrect retry.
@@ -450,18 +800,23 @@ tracked_question_text <- function(text,
                                   trim = TRUE,
                                   rows = NULL,
                                   cols = NULL,
-                                  options = list()) {
+                                  options = list(),
+                                  context = NULL) {
   if (!requireNamespace("learnr", quietly = TRUE)) {
     cli::cli_abort(
       "Package {.pkg learnr} is required to use {.fn tracked_question_text}."
     )
   }
 
-  tracking <- validate_learnr_tracking_config(
-    student_id = student_id,
-    tutorial_id = tutorial_id,
+  tracking <- resolve_learnr_tracking_config(
+    context = context,
+    student_id = if (missing(student_id)) NULL else student_id,
+    student_id_missing = missing(student_id),
+    tutorial_id = if (missing(tutorial_id)) NULL else tutorial_id,
+    tutorial_id_missing = missing(tutorial_id),
     question_id = question_id,
-    db_path = db_path,
+    db_path = if (missing(db_path)) NULL else db_path,
+    db_path_missing = missing(db_path),
     max_score = max_score
   )
 
@@ -503,6 +858,9 @@ tracked_question_text <- function(text,
 #' @param student_id Student identifier stored in the tracking database.
 #' @param db_path Path to the SQLite tracking database.
 #' @param max_score Maximum score stored for the question. Defaults to `1`.
+#' @param context Optional context returned by [setup_learnr_tracking()]. If
+#'   supplied, `student_id`, `tutorial_id`, and `db_path` are read from the
+#'   context unless explicitly provided.
 #' @param correct Text shown by `learnr` for a correct answer.
 #' @param incorrect Text shown by `learnr` for an incorrect answer.
 #' @param try_again Text shown by `learnr` for an incorrect retry.
@@ -544,18 +902,23 @@ tracked_question_numeric <- function(text,
                                      max = NA,
                                      step = NA,
                                      options = list(),
-                                     tolerance = 1.5e-08) {
+                                     tolerance = 1.5e-08,
+                                     context = NULL) {
   if (!requireNamespace("learnr", quietly = TRUE)) {
     cli::cli_abort(
       "Package {.pkg learnr} is required to use {.fn tracked_question_numeric}."
     )
   }
 
-  tracking <- validate_learnr_tracking_config(
-    student_id = student_id,
-    tutorial_id = tutorial_id,
+  tracking <- resolve_learnr_tracking_config(
+    context = context,
+    student_id = if (missing(student_id)) NULL else student_id,
+    student_id_missing = missing(student_id),
+    tutorial_id = if (missing(tutorial_id)) NULL else tutorial_id,
+    tutorial_id_missing = missing(tutorial_id),
     question_id = question_id,
-    db_path = db_path,
+    db_path = if (missing(db_path)) NULL else db_path,
+    db_path_missing = missing(db_path),
     max_score = max_score
   )
 

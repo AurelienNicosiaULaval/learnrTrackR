@@ -4,6 +4,18 @@
 
 The prototype uses two R-side strategies.
 
+The setup chunk first creates a reusable tracking context:
+
+```r
+tracking <- learnrTrackR::setup_learnr_tracking(
+  tutorial_id = tutorial_id,
+  student_id = student_id,
+  db_path = tracking_db_path,
+  group_id = student_group_id,
+  config_path = tracking_config_path
+)
+```
+
 For `learnr` questions, it uses `tracked_question()`, which dispatches to
 `tracked_question_radio()`, `tracked_question_checkbox()`,
 `tracked_question_text()`, or `tracked_question_numeric()`. These helpers create
@@ -16,9 +28,7 @@ check chunks:
 
 ```r
 learnrTrackR::track_gradethis_attempt(
-  con = con,
-  student_id = student_id,
-  tutorial_id = tutorial_id,
+  context = tracking,
   question_id = "q2_mean_temperature",
   submitted_answer = .user_code,
   correct = correct,

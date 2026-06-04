@@ -49,6 +49,8 @@ reference:
   - export_tracking_bundle
 - title: learnr helpers
   contents:
+  - setup_learnr_tracking
+  - open_learnr_tracking_db
   - tracked_question
   - tracked_question_radio
   - tracked_question_checkbox

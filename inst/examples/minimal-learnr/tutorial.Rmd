@@ -29,10 +29,19 @@ tracking_config_dir <- system.file(
   "examples/minimal-learnr/config-csv",
   package = "learnrTrackR"
 )
-
-open_tracking_db <- function() {
-  learnrTrackR::init_tracking_db(tracking_db_path, overwrite = FALSE)
+tracking_config_path <- if (nzchar(tracking_config_dir)) {
+  tracking_config_dir
+} else {
+  NULL
 }
+
+tracking <- learnrTrackR::setup_learnr_tracking(
+  tutorial_id = tutorial_id,
+  student_id = student_id,
+  db_path = tracking_db_path,
+  group_id = student_group_id,
+  config_path = tracking_config_path
+)
 
 quebec_temperatures <- tibble::tibble(
   station = c("Québec", "Québec", "Québec", "Montréal", "Montréal", "Montréal"),
@@ -43,10 +52,12 @@ quebec_temperatures <- tibble::tibble(
   temp_c = c(-9, -6, -8, -5, -3, -7)
 )
 
-setup_con <- open_tracking_db()
-if (nzchar(tracking_config_dir)) {
-  learnrTrackR::load_tracking_config(setup_con, tracking_config_dir)
-} else {
+open_tracking_db <- function() {
+  learnrTrackR::open_learnr_tracking_db(tracking)
+}
+
+if (is.null(tracking_config_path)) {
+  setup_con <- open_tracking_db()
   learnrTrackR::register_questions(
     setup_con,
     tutorial_id = tutorial_id,
@@ -69,16 +80,8 @@ if (nzchar(tracking_config_dir)) {
       max_score = c(1, 1, 1, 1, 1)
     )
   )
+  DBI::dbDisconnect(setup_con)
 }
-learnrTrackR::register_students(
-  setup_con,
-  tibble::tibble(
-    student_id = student_id,
-    student_label = student_id,
-    group_id = student_group_id
-  )
-)
-DBI::dbDisconnect(setup_con)
 ```
 
 ## Identification
@@ -113,9 +116,7 @@ learnrTrackR::tracked_question(
   allow_retry = TRUE,
   try_again = "Try again. Add the three values and divide by 3.",
   question_id = "q1_multiple_choice",
-  tutorial_id = tutorial_id,
-  student_id = student_id,
-  db_path = tracking_db_path,
+  context = tracking,
   max_score = 1
 )
 ```
@@ -140,9 +141,7 @@ learnrTrackR::tracked_question(
   type = "text",
   allow_retry = TRUE,
   question_id = "q2_text_station",
-  tutorial_id = tutorial_id,
-  student_id = student_id,
-  db_path = tracking_db_path,
+  context = tracking,
   max_score = 1
 )
 ```
@@ -161,9 +160,7 @@ learnrTrackR::tracked_question(
   max = 20,
   step = 1,
   question_id = "q3_numeric_rows",
-  tutorial_id = tutorial_id,
-  student_id = student_id,
-  db_path = tracking_db_path,
+  context = tracking,
   max_score = 1
 )
 ```
@@ -194,13 +191,8 @@ gradethis::grade_this({
     "Try again. Use mean() on quebec_temperatures$temp_c."
   }
 
-  con <- open_tracking_db()
-  on.exit(DBI::dbDisconnect(con), add = TRUE)
-
   learnrTrackR::track_gradethis_attempt(
-    con = con,
-    student_id = student_id,
-    tutorial_id = tutorial_id,
+    context = tracking,
     question_id = "q2_mean_temperature",
     submitted_answer = .user_code,
     correct = correct,
@@ -254,13 +246,8 @@ gradethis::grade_this({
     "Try again. Group by station, then summarise mean_temp_c = mean(temp_c)."
   }
 
-  con <- open_tracking_db()
-  on.exit(DBI::dbDisconnect(con), add = TRUE)
-
   learnrTrackR::track_gradethis_attempt(
-    con = con,
-    student_id = student_id,
-    tutorial_id = tutorial_id,
+    context = tracking,
     question_id = "q3_summarise_temperature",
     submitted_answer = .user_code,
     correct = correct,

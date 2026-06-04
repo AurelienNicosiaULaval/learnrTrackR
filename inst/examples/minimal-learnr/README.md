@@ -5,9 +5,10 @@ This directory contains a minimal `learnr` example for `learnrTrackR`.
 It uses two explicit tracking strategies:
 
 - `learnrTrackR::tracked_question()` for `learnr` radio, checkbox, text, and
-  numeric questions.
+  numeric questions, using a shared context created by
+  `learnrTrackR::setup_learnr_tracking()`.
 - `learnrTrackR::track_gradethis_attempt()` inside `gradethis::grade_this()`
-  check chunks for code exercises.
+  check chunks for code exercises, using the same shared context.
 
 Both strategies avoid relying on internal `learnr` JavaScript implementation
 details.
@@ -46,9 +47,10 @@ learnr::run_tutorial(
 
 The `LEARNRTRACKR_STUDENT_ID` value is required. The tutorial uses
 `get_tracking_student_id()` and stops with an informative error if the variable
-is missing or empty. The tutorial registers the current learner with
-`register_students()` and loads the expected course, tutorial, student, and
-question metadata from the CSV configuration directory.
+is missing or empty. The tutorial creates a context with
+`setup_learnr_tracking()`, registers the current learner, and loads the
+expected course, tutorial, student, and question metadata from the CSV
+configuration directory.
 
 If the package is installed, the tutorial path can be found with:
 

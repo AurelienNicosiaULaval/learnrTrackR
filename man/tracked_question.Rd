@@ -13,7 +13,8 @@ tracked_question(
   tutorial_id,
   student_id,
   db_path,
-  max_score = 1
+  max_score = 1,
+  context = NULL
 )
 }
 \arguments{
@@ -36,6 +37,10 @@ question helper.}
 \item{db_path}{Path to the SQLite tracking database.}
 
 \item{max_score}{Maximum score stored for the question. Defaults to \code{1}.}
+
+\item{context}{Optional context returned by \code{\link[=setup_learnr_tracking]{setup_learnr_tracking()}}. If
+supplied, \code{student_id}, \code{tutorial_id}, and \code{db_path} are read from the
+context unless explicitly provided.}
 }
 \value{
 A tracked \code{learnr} question object.
@@ -65,6 +70,21 @@ if (requireNamespace("learnr", quietly = TRUE)) {
     tutorial_id = "module_01",
     student_id = "student_001",
     db_path = db_path
+  )
+
+  tracking <- setup_learnr_tracking(
+    tutorial_id = "module_01",
+    student_id = "student_001",
+    db_path = db_path
+  )
+
+  tracked_question(
+    "What is 3 + 3?",
+    learnr::answer("5"),
+    learnr::answer("6", correct = TRUE),
+    type = "radio",
+    question_id = "q2",
+    context = tracking
   )
 }
 }

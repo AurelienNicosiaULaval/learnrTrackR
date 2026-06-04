@@ -17,7 +17,8 @@ track_gradethis_attempt(
   grade_status = NULL,
   session_id = NULL,
   attempt_number = NULL,
-  timestamp = Sys.time()
+  timestamp = Sys.time(),
+  context = NULL
 )
 }
 \arguments{
@@ -50,6 +51,10 @@ If \code{NULL}, a simple default message is chosen from \code{correct}.}
 \item{attempt_number}{Optional attempt number passed to \code{\link[=track_attempt]{track_attempt()}}.}
 
 \item{timestamp}{Attempt timestamp. Defaults to \code{Sys.time()}.}
+
+\item{context}{Optional context returned by \code{\link[=setup_learnr_tracking]{setup_learnr_tracking()}}. If
+supplied, \code{student_id}, \code{tutorial_id}, and the database connection can be
+resolved from the context.}
 }
 \value{
 A \code{gradethis_graded} object returned by \code{gradethis::graded()}.
@@ -75,5 +80,18 @@ if (requireNamespace("gradethis", quietly = TRUE)) {
   )
 
   DBI::dbDisconnect(con)
+
+  tracking <- setup_learnr_tracking(
+    tutorial_id = "module_01",
+    student_id = "student_001",
+    db_path = db_path
+  )
+
+  track_gradethis_attempt(
+    context = tracking,
+    question_id = "q2",
+    submitted_answer = "mean(x)",
+    correct = FALSE
+  )
 }
 }

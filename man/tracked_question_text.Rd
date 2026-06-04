@@ -21,7 +21,8 @@ tracked_question_text(
   trim = TRUE,
   rows = NULL,
   cols = NULL,
-  options = list()
+  options = list(),
+  context = NULL
 )
 }
 \arguments{
@@ -57,6 +58,10 @@ followed by optional arguments passed to \code{\link[learnr:question_text]{learn
 \item{rows, cols}{Optional text area dimensions.}
 
 \item{options}{Additional \code{learnr} question options.}
+
+\item{context}{Optional context returned by \code{\link[=setup_learnr_tracking]{setup_learnr_tracking()}}. If
+supplied, \code{student_id}, \code{tutorial_id}, and \code{db_path} are read from the
+context unless explicitly provided.}
 }
 \value{
 A \code{learnr} text question object with tracking metadata.

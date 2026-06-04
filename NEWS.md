@@ -1,6 +1,9 @@
 # learnrTrackR 0.1.1.9000
 
-- Development version.
+- Added `setup_learnr_tracking()` and `open_learnr_tracking_db()` to simplify
+  explicit `learnr` tutorial setup.
+- Allowed tracked `learnr` questions and `track_gradethis_attempt()` to use a
+  reusable tracking context.
 
 # learnrTrackR 0.1.0
 

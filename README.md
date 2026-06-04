@@ -296,8 +296,9 @@ by registered group.
 
 The directory `inst/examples/minimal-learnr/` contains a small tutorial with
 tracked radio, text, and numeric questions, plus two tracked code exercises.
-The questions use the generic `tracked_question()` helper. The code exercises
-use explicit calls to `track_gradethis_attempt()` inside
+The setup chunk creates a reusable context with `setup_learnr_tracking()`. The
+questions use the generic `tracked_question()` helper with that context. The
+code exercises use explicit calls to `track_gradethis_attempt()` inside
 `gradethis::grade_this()` check chunks.
 
 From the package source directory, install the package locally first:
@@ -337,6 +338,9 @@ The four built-in `learnr` question families can be tracked with
 `tracked_question()`, or with the explicit wrappers
 `tracked_question_radio()`, `tracked_question_checkbox()`,
 `tracked_question_text()`, and `tracked_question_numeric()`.
+Use `setup_learnr_tracking()` in a tutorial setup chunk to initialize the
+database, load configuration, register the current learner, and pass the
+returned context to tracked questions.
 
 Student identity is read with `get_tracking_student_id()`, which checks the
 `LEARNRTRACKR_STUDENT_ID` environment variable and throws an informative error
