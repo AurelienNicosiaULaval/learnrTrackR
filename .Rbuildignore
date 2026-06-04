@@ -12,3 +12,6 @@
 ^Meta$
 ^inst/examples/postgres-docker/\.env$
 ^privacy\.md$
+^release-checklist\.md$
+^\.github$
+^\.github/

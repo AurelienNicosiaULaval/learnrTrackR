@@ -3,4 +3,68 @@ template:
   bootstrap: 5
 navbar:
   structure:
-    left: [intro, reference, news]
+    left: [intro, articles, reference, news]
+articles:
+- title: Workflows
+  navbar: Workflows
+  contents:
+  - getting-started
+  - teacher-workflow
+  - deployment-postgresql
+reference:
+- title: Database backends
+  contents:
+  - init_tracking_db
+  - connect_tracking_db
+  - connect_postgres_tracking_db
+  - create_schema
+- title: Tracking attempts
+  contents:
+  - track_attempt
+  - get_attempts
+  - get_tracking_student_id
+  - track_gradethis_attempt
+- title: Metadata and configuration
+  contents:
+  - register_students
+  - get_students
+  - register_courses
+  - get_courses
+  - register_tutorials
+  - get_tutorials
+  - register_questions
+  - get_questions
+  - create_tracking_config_template
+  - read_tracking_config
+  - load_tracking_config
+- title: Scoring and exports
+  contents:
+  - compute_scores
+  - gradebook
+  - export_results
+  - moodle_grades
+  - export_moodle_grades
+  - tracking_export_data
+  - export_tracking_bundle
+- title: learnr helpers
+  contents:
+  - tracked_question
+  - tracked_question_radio
+  - tracked_question_checkbox
+  - tracked_question_text
+  - tracked_question_numeric
+- title: Dashboard, analytics, and reports
+  contents:
+  - dashboard_data
+  - run_dashboard
+  - summarise_questions
+  - summarise_students
+  - detect_difficult_questions
+  - detect_stalled_students
+  - teacher_report_data
+  - generate_teacher_report
+- title: Privacy utilities
+  contents:
+  - delete_student_data
+  - pseudonymise_results
+  - anonymise_results

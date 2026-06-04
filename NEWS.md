@@ -1,6 +1,5 @@
-# learnrTrackR 0.0.1
+# learnrTrackR 0.1.0
 
-- Initial package skeleton.
 - Added SQLite tracking database.
 - Added functions for tracking simulated attempts.
 - Added score computation.
@@ -35,3 +34,7 @@
 - Added pedagogical analytics helpers for question summaries, student
   summaries, difficult-question detection, and stalled-student detection.
 - Added HTML teacher report generation.
+
+# learnrTrackR 0.0.1
+
+- Initial package skeleton.

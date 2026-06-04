@@ -1,14 +1,16 @@
 Package: learnrTrackR
 Title: Track Simulated learnr Tutorial Attempts
-Version: 0.0.1
+Version: 0.1.0
 Authors@R:
     person("Aurélien", "Nicosia", , "116816597+AurelienNicosiaULaval@users.noreply.github.com",
            role = c("aut", "cre"))
-Description: Provides a minimal SQLite storage layer for simulated tutorial
-    attempts. The package records submitted answers, attempt metadata, simple
-    grading outcomes, score summaries, and CSV exports for early prototyping of
+Description: Provides SQLite and optional PostgreSQL storage for tracked
+    tutorial attempts. The package records submitted answers, attempt metadata,
+    grading outcomes, score summaries, Moodle-ready exports, dashboard data,
+    privacy utilities, and pedagogical reports for early prototyping of
     tracked learnr-style teaching workflows.
 License: MIT + file LICENSE
+URL: https://aureliennicosiaulaval.github.io/learnrTrackR/
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.3
@@ -29,5 +31,7 @@ Suggests:
     testthat (>= 3.0.0),
     withr,
     yaml
+Config/Needs/website:
+    pkgdown
 Config/testthat/edition: 3
 VignetteBuilder: knitr

@@ -3,5 +3,6 @@
 learnrTrackR.Rcheck/
 *.Rcheck/
 doc/
+docs/
 Meta/
 inst/examples/postgres-docker/.env
