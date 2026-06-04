@@ -35,6 +35,7 @@
 - Added pedagogical analytics helpers for question summaries, student
   summaries, difficult-question detection, and stalled-student detection.
 - Added HTML teacher report generation.
+- Added GitHub repository metadata and `gradethis` remote metadata for CI.
 
 # learnrTrackR 0.0.1
 
