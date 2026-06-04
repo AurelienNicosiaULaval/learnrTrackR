@@ -254,6 +254,19 @@ vignette("deployment-postgresql", package = "learnrTrackR")
 The Docker Compose example is included in
 `inst/examples/postgres-docker/`.
 
+## Privacy utilities
+
+Student-level records can be deleted, pseudonymised, or stripped of direct
+identifiers:
+
+```r
+delete_student_data(con, "student_001")
+pseudo <- pseudonymise_results(tracking_export_data(con, "module_01"))
+anonymous <- anonymise_results(pseudo$data)
+```
+
+See `privacy.md` for practical data-governance notes.
+
 ## Short roadmap
 
 1. Validate the SQLite storage layer with simulated attempts.

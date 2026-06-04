@@ -31,3 +31,4 @@
 - Added optional PostgreSQL schema creation and connection support through
   `connect_postgres_tracking_db()`.
 - Added a PostgreSQL deployment vignette and a local Docker Compose example.
+- Added privacy utilities and a repository privacy guide for student data.
