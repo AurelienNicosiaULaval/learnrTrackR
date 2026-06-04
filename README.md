@@ -245,6 +245,15 @@ The PostgreSQL path is intended for controlled deployments. The current Shiny
 launcher still accepts a SQLite database path; use `dashboard_data(con, ...)`
 directly when working with an open PostgreSQL connection.
 
+For a reproducible local PostgreSQL rehearsal, see:
+
+```r
+vignette("deployment-postgresql", package = "learnrTrackR")
+```
+
+The Docker Compose example is included in
+`inst/examples/postgres-docker/`.
+
 ## Short roadmap
 
 1. Validate the SQLite storage layer with simulated attempts.

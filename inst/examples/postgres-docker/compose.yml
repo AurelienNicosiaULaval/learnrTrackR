@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: learnrtrackr-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${LEARNRTRACKR_POSTGRES_DB:-learnrtrackr}
+      POSTGRES_USER: ${LEARNRTRACKR_POSTGRES_USER:-learnrtrackr}
+      POSTGRES_PASSWORD: ${LEARNRTRACKR_POSTGRES_PASSWORD:?Set LEARNRTRACKR_POSTGRES_PASSWORD in the env file}
+    ports:
+      - "${LEARNRTRACKR_POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - learnrtrackr-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  learnrtrackr-postgres-data:

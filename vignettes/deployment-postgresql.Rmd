@@ -1,0 +1,159 @@
+---
+title: "Deploying learnrTrackR with PostgreSQL"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Deploying learnrTrackR with PostgreSQL}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  eval = FALSE
+)
+```
+
+# Scope
+
+This guide describes a small PostgreSQL deployment rehearsal for
+`learnrTrackR`. It is suitable for local testing, a teaching prototype, or a
+conversation with technical staff. It is not a complete production deployment
+or institutional authentication design.
+
+SQLite remains the simplest backend for local demonstrations. In this package,
+PostgreSQL is the intended next step when several users may write to the same
+tracking database.
+
+# Local Docker PostgreSQL
+
+The package includes a Docker Compose example:
+
+```r
+system.file(
+  "examples/postgres-docker",
+  package = "learnrTrackR",
+  mustWork = TRUE
+)
+```
+
+From an installed package, copy that directory to a working location. From the
+package source tree, it is available at:
+
+```text
+inst/examples/postgres-docker/
+```
+
+Create the local environment file:
+
+```sh
+cd inst/examples/postgres-docker
+cp env.example .env
+```
+
+Edit `.env` and replace `LEARNRTRACKR_POSTGRES_PASSWORD` with a long random
+password. Then start PostgreSQL:
+
+```sh
+docker compose --env-file .env up -d
+```
+
+Run the smoke test:
+
+```sh
+Rscript smoke-test.R
+```
+
+The smoke test creates the tracking schema, inserts one demo student, one demo
+tutorial, registered questions, and one attempt, then prints a gradebook row.
+
+Stop the service:
+
+```sh
+docker compose --env-file .env down
+```
+
+Delete the local data volume only when the test data can be discarded:
+
+```sh
+docker compose --env-file .env down -v
+```
+
+# Connecting from R
+
+Install the optional PostgreSQL dependency:
+
+```r
+install.packages("RPostgres")
+```
+
+Then connect to an existing PostgreSQL database:
+
+```r
+library(learnrTrackR)
+
+con <- connect_postgres_tracking_db(
+  dbname = Sys.getenv("LEARNRTRACKR_POSTGRES_DB", "learnrtrackr"),
+  host = Sys.getenv("LEARNRTRACKR_POSTGRES_HOST", "127.0.0.1"),
+  port = as.integer(Sys.getenv("LEARNRTRACKR_POSTGRES_PORT", "5432")),
+  user = Sys.getenv("LEARNRTRACKR_POSTGRES_USER", "learnrtrackr"),
+  password = Sys.getenv("LEARNRTRACKR_POSTGRES_PASSWORD"),
+  initialize = TRUE
+)
+
+load_tracking_config(con, "config")
+```
+
+For an already initialized database, use `initialize = FALSE`. The function
+will still verify that the required tracking tables exist.
+
+# Testing with a real PostgreSQL server
+
+The unit test suite includes an optional PostgreSQL integration test. It is
+skipped by default. To run it, set `LEARNRTRACKR_TEST_POSTGRES_DSN` to a test
+database connection string:
+
+```sh
+export LEARNRTRACKR_TEST_POSTGRES_DSN="postgresql://learnrtrackr:password@127.0.0.1:5432/learnrtrackr"
+Rscript -e 'devtools::test(filter = "db")'
+```
+
+Use a disposable test database. The test creates and drops a temporary schema.
+
+# Dashboard status
+
+The exported data preparation function `dashboard_data(con, ...)` works with an
+open DBI connection. The interactive launcher `run_dashboard()` still expects a
+SQLite database path. A future deployment step should add a PostgreSQL-aware
+dashboard launcher.
+
+# Minimum operational safeguards
+
+Use PostgreSQL only in a controlled environment. At minimum:
+
+1. Use a database dedicated to `learnrTrackR`.
+2. Use a database user dedicated to the application.
+3. Store only the student identifiers required for teaching operations.
+4. Avoid committing `.env` files, passwords, database dumps, or student exports.
+5. Restrict network access to the PostgreSQL service.
+6. Back up the database before using it for a real course.
+7. Document who can access the dashboard and exported CSV files.
+
+PostgreSQL documents standard libpq environment variables such as `PGHOST`,
+`PGDATABASE`, `PGUSER`, and `PGPASSWORD`. The PostgreSQL documentation warns
+that environment-variable passwords can be exposed on some systems and suggests
+password files as an alternative. Docker Compose uses a YAML file to define
+services, networks, and volumes. The official `postgres` container image uses
+environment variables such as `POSTGRES_DB`, `POSTGRES_USER`, and
+`POSTGRES_PASSWORD` when initializing a container.
+
+# References
+
+- PostgreSQL Global Development Group. Accessed 2026-06-04. libpq environment
+  variables.
+  <https://www.postgresql.org/docs/current/libpq-envars.htm>
+- Docker Inc. Accessed 2026-06-04. Compose file reference.
+  <https://docs.docker.com/compose/compose-file/>
+- Docker Inc. Accessed 2026-06-04. postgres official image.
+  <https://hub.docker.com/_/postgres>
