@@ -1,0 +1,161 @@
+---
+title: "Exporting grades to Moodle"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Exporting grades to Moodle}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+# Scope
+
+This guide shows how to prepare a simple Moodle-ready CSV grade file from
+`learnrTrackR`. The package does not call the Moodle API. The workflow is a
+manual CSV import into the Moodle gradebook.
+
+MoodleDocs states that grades can be imported as CSV or XML files, or by
+pasting from a spreadsheet. MoodleDocs also notes that grade import is
+equivalent to manual grading in the grader report, so imported grades should be
+tested carefully before use in a real course.
+
+# Create a small gradebook
+
+```{r setup}
+library(learnrTrackR)
+
+db_path <- tempfile(fileext = ".sqlite")
+con <- init_tracking_db(db_path, overwrite = TRUE)
+
+register_students(
+  con,
+  data.frame(
+    student_id = c("student_001", "student_002"),
+    student_label = c("Student 1", "Student 2"),
+    group_id = c("A", "A")
+  )
+)
+
+register_questions(
+  con,
+  tutorial_id = "module_01",
+  questions = data.frame(
+    question_id = c("q1", "q2"),
+    max_score = c(1, 1)
+  )
+)
+
+track_attempt(
+  con,
+  student_id = "student_001",
+  tutorial_id = "module_01",
+  question_id = "q1",
+  submitted_answer = "mean(x)",
+  score = 1,
+  max_score = 1,
+  require_registered_student = TRUE
+)
+
+track_attempt(
+  con,
+  student_id = "student_002",
+  tutorial_id = "module_01",
+  question_id = "q1",
+  submitted_answer = "sd(x)",
+  score = 0,
+  max_score = 1,
+  require_registered_student = TRUE
+)
+```
+
+# Build the Moodle table
+
+`moodle_grades()` returns a wide table with one identifier column and one grade
+column.
+
+```{r moodle-table}
+moodle_grades(
+  con,
+  tutorial_id = "module_01",
+  grade_item = "Module 01 quiz"
+)
+```
+
+By default, the identifier column is `useridnumber`, a common Moodle mapping
+target when institutional student identifiers are stored in Moodle. If your
+course uses a different field, change `id_column`.
+
+```{r custom-id}
+moodle_grades(
+  con,
+  tutorial_id = "module_01",
+  id_column = "email",
+  grade_item = "Module 01 quiz"
+)
+```
+
+This example still uses `student_id` values in the exported `email` column,
+because the example database does not store real email addresses. In a real
+course, choose an identifier that matches exactly one Moodle user.
+
+# Export the CSV file
+
+```{r export}
+csv_path <- tempfile(fileext = ".csv")
+
+export_moodle_grades(
+  con,
+  path = csv_path,
+  tutorial_id = "module_01",
+  grade_item = "Module 01 quiz",
+  grade_value = "percent",
+  digits = 2
+)
+
+readr::read_csv(csv_path, show_col_types = FALSE)
+```
+
+Use `grade_value = "percent"` for a 0 to 100 grade, or `grade_value = "score"`
+for the raw gradebook score.
+
+# Suggested Moodle import workflow
+
+Before importing into a real course:
+
+1. Create the grade item in Moodle before importing.
+2. Export a small gradebook sample from Moodle.
+3. Confirm the user identifier field used in your course.
+4. Generate a `learnrTrackR` CSV with the same identifier field.
+5. Import the CSV in Moodle's gradebook import interface.
+6. Preview the import and map the user field and grade item columns.
+7. Validate the result on a small test group before importing a full cohort.
+
+Do not add new grade columns in spreadsheet software after exporting from
+Moodle. MoodleDocs warns that Moodle may reject imports containing columns that
+did not exist in the exported gradebook. If a new grade item is needed, create
+it in Moodle first.
+
+# Privacy check before import
+
+The Moodle grade CSV should contain only the identifier needed for matching and
+the grade item column. Do not include attempts, feedback, free-text answers, or
+pseudonymisation keys in a Moodle import file.
+
+```{r disconnect, include = FALSE}
+DBI::dbDisconnect(con)
+```
+
+# References
+
+- MoodleDocs. Accessed 2026-06-04. Grade import.
+  <https://docs.moodle.org/en/Grade_import>
+- MoodleDocs. Accessed 2026-06-04. Capabilities/moodle/grade:import.
+  <https://docs.moodle.org/en/Capabilities/moodle/grade%3Aimport>
+- MoodleDocs. Accessed 2026-06-04. Capabilities/gradeimport/csv:view.
+  <https://docs.moodle.org/en/Capabilities/gradeimport/csv%3Aview>

@@ -34,6 +34,7 @@ store simulated attempts and export results for inspection.
 - Build a gradebook that counts unanswered registered questions.
 - Export attempts or scores to CSV.
 - Export a simple Moodle-ready CSV grade table.
+- Document a cautious Moodle CSV import workflow.
 - Export rich CSV bundles for a tutorial, group, or student.
 - Open a minimal local Shiny teacher dashboard.
 - Filter dashboard tables and dashboard CSV exports by registered group.
@@ -353,3 +354,9 @@ and Moodle-ready grades. The export can be filtered by `group_id` or
 `export_moodle_grades()` writes a compact CSV with one student identifier column
 and one grade item column. Moodle then asks the teacher to map these columns to
 the appropriate user field and grade item during CSV import.
+
+For the full Moodle CSV workflow, see:
+
+```r
+vignette("moodle-export", package = "learnrTrackR")
+```

@@ -10,6 +10,7 @@ articles:
   contents:
   - getting-started
   - teacher-workflow
+  - moodle-export
   - deployment-postgresql
 reference:
 - title: Database backends
