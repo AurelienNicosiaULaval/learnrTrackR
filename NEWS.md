@@ -32,3 +32,5 @@
   `connect_postgres_tracking_db()`.
 - Added a PostgreSQL deployment vignette and a local Docker Compose example.
 - Added privacy utilities and a repository privacy guide for student data.
+- Added pedagogical analytics helpers for question summaries, student
+  summaries, difficult-question detection, and stalled-student detection.

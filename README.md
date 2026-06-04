@@ -267,6 +267,20 @@ anonymous <- anonymise_results(pseudo$data)
 
 See `privacy.md` for practical data-governance notes.
 
+## Pedagogical analytics
+
+The package can produce teacher-facing summaries for an individual tutorial:
+
+```r
+summarise_questions(con, "module_01")
+summarise_students(con, "module_01")
+detect_difficult_questions(con, "module_01")
+detect_stalled_students(con, "module_01")
+```
+
+These helpers use the same scoring rules as `gradebook()` and can be filtered
+by registered group.
+
 ## Short roadmap
 
 1. Validate the SQLite storage layer with simulated attempts.
