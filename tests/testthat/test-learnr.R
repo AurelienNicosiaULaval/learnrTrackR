@@ -1,3 +1,42 @@
+test_that("setup_learnr_tracking creates a reusable context", {
+  db_path <- withr::local_tempfile(fileext = ".sqlite")
+
+  tracking <- setup_learnr_tracking(
+    tutorial_id = "minimal_learnr",
+    student_id = "student_001",
+    db_path = db_path,
+    group_id = "A"
+  )
+
+  con <- open_learnr_tracking_db(tracking)
+  withr::defer(DBI::dbDisconnect(con))
+  students <- get_students(con)
+
+  expect_s3_class(tracking, "learnrTrackR_context")
+  expect_equal(tracking$student_id, "student_001")
+  expect_equal(tracking$tutorial_id, "minimal_learnr")
+  expect_equal(tracking$db_path, db_path)
+  expect_true(file.exists(db_path))
+  expect_equal(students$student_id, "student_001")
+  expect_equal(students$group_id, "A")
+})
+
+test_that("setup_learnr_tracking can skip student registration", {
+  db_path <- withr::local_tempfile(fileext = ".sqlite")
+
+  tracking <- setup_learnr_tracking(
+    tutorial_id = "minimal_learnr",
+    student_id = "student_001",
+    db_path = db_path,
+    register_student = FALSE
+  )
+
+  con <- open_learnr_tracking_db(tracking)
+  withr::defer(DBI::dbDisconnect(con))
+
+  expect_equal(nrow(get_students(con)), 0)
+})
+
 test_that("track_gradethis_attempt records and returns a gradethis grade", {
   skip_if_not_installed("gradethis")
 
@@ -62,6 +101,37 @@ test_that("track_gradethis_attempt works inside grade_this", {
   expect_equal(attempts$submitted_answer, "2 + 2")
 })
 
+test_that("track_gradethis_attempt can use a learnr tracking context", {
+  skip_if_not_installed("gradethis")
+
+  db_path <- withr::local_tempfile(fileext = ".sqlite")
+  tracking <- setup_learnr_tracking(
+    tutorial_id = "minimal_learnr",
+    student_id = "student_001",
+    db_path = db_path
+  )
+
+  grade <- track_gradethis_attempt(
+    context = tracking,
+    question_id = "q2_mean",
+    submitted_answer = "mean(c(2, 4, 6))",
+    correct = TRUE,
+    feedback = "Correct.",
+    max_score = 1
+  )
+
+  con <- open_learnr_tracking_db(tracking)
+  withr::defer(DBI::dbDisconnect(con))
+  attempts <- get_attempts(con)
+
+  expect_s3_class(grade, "gradethis_graded")
+  expect_true(grade$correct)
+  expect_equal(nrow(attempts), 1)
+  expect_equal(attempts$student_id, "student_001")
+  expect_equal(attempts$tutorial_id, "minimal_learnr")
+  expect_equal(attempts$score, 1)
+})
+
 test_that("tracked_question_radio records radio submissions", {
   skip_if_not_installed("learnr")
 
@@ -89,6 +159,40 @@ test_that("tracked_question_radio records radio submissions", {
   expect_equal(attempts$question_id, "q1_radio")
   expect_equal(attempts$submitted_answer, "4")
   expect_equal(attempts$grade_status, "correct")
+  expect_equal(attempts$score, 1)
+})
+
+test_that("tracked_question can use a learnr tracking context", {
+  skip_if_not_installed("learnr")
+
+  db_path <- withr::local_tempfile(fileext = ".sqlite")
+  tracking <- setup_learnr_tracking(
+    tutorial_id = "minimal_learnr",
+    student_id = "student_001",
+    db_path = db_path
+  )
+
+  question <- tracked_question(
+    "What is 2 + 2?",
+    learnr::answer("3"),
+    learnr::answer("4", correct = TRUE, message = "Correct."),
+    type = "radio",
+    question_id = "q1_context",
+    context = tracking,
+    max_score = 1
+  )
+
+  result <- learnr::question_is_correct(question, "4")
+
+  con <- open_learnr_tracking_db(tracking)
+  withr::defer(DBI::dbDisconnect(con))
+  attempts <- get_attempts(con)
+
+  expect_true(result$correct)
+  expect_equal(nrow(attempts), 1)
+  expect_equal(attempts$question_id, "q1_context")
+  expect_equal(attempts$student_id, "student_001")
+  expect_equal(attempts$tutorial_id, "minimal_learnr")
   expect_equal(attempts$score, 1)
 })
 

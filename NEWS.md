@@ -1,3 +1,13 @@
+# learnrTrackR 0.1.1.9000
+
+- Added `setup_learnr_tracking()` and `open_learnr_tracking_db()` to simplify
+  explicit `learnr` tutorial setup.
+- Allowed tracked `learnr` questions and `track_gradethis_attempt()` to use a
+  reusable tracking context.
+- Added a vignette documenting the reusable `learnr` tracking context workflow.
+- Added `get_learnr_tracking_env()` to validate tracked `learnr` launch
+  environment variables together.
+
 # learnrTrackR 0.1.0
 
 - Added SQLite tracking database.

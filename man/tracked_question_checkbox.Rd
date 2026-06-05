@@ -11,7 +11,8 @@ tracked_question_checkbox(
   tutorial_id,
   student_id,
   db_path,
-  max_score = 1
+  max_score = 1,
+  context = NULL
 )
 }
 \arguments{
@@ -29,6 +30,10 @@ followed by optional arguments passed to \code{\link[learnr:question_checkbox]{l
 \item{db_path}{Path to the SQLite tracking database.}
 
 \item{max_score}{Maximum score stored for the question. Defaults to \code{1}.}
+
+\item{context}{Optional context returned by \code{\link[=setup_learnr_tracking]{setup_learnr_tracking()}}. If
+supplied, \code{student_id}, \code{tutorial_id}, and \code{db_path} are read from the
+context unless explicitly provided.}
 }
 \value{
 A \code{learnr} checkbox question object with tracking metadata.
