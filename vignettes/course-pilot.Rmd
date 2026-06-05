@@ -1,0 +1,104 @@
+---
+title: "Course pilot workflow"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Course pilot workflow}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+# Scope
+
+This vignette introduces the course pilot example included with
+`learnrTrackR`. The pilot is a simulated descriptive statistics tutorial with
+tracked `learnr` questions, tracked `gradethis` code exercises, CSV
+configuration files, and teacher outputs.
+
+The data are simulated. They are intended only for testing the tracking
+workflow.
+
+# Locate the example
+
+```{r locate-example}
+library(learnrTrackR)
+
+example_dir <- system.file("examples/course-pilot", package = "learnrTrackR")
+example_dir
+```
+
+The directory contains:
+
+```{r list-example}
+list.files(example_dir)
+```
+
+# Read the configuration
+
+```{r read-config}
+config_dir <- file.path(example_dir, "config-csv")
+config <- read_tracking_config(config_dir)
+
+config$courses
+config$tutorials
+config$students
+config$questions
+```
+
+# Launch the tutorial locally
+
+The tutorial itself is not launched during vignette rendering. To run it
+locally:
+
+```{r run-tutorial, eval = FALSE}
+Sys.setenv(
+  LEARNRTRACKR_DB = file.path(tempdir(), "learnrtrackr-course-pilot.sqlite"),
+  LEARNRTRACKR_STUDENT_ID = "student_demo",
+  LEARNRTRACKR_GROUP_ID = "A"
+)
+
+learnr::run_tutorial(
+  file.path(example_dir, "tutorial.Rmd"),
+  clean = TRUE,
+  as_rstudio_job = FALSE
+)
+```
+
+# Simulate a cohort
+
+The example also includes a script that records simulated attempts for a small
+cohort. This is useful for checking exports and reports without using the
+browser.
+
+```{r simulate, eval = FALSE}
+source(file.path(example_dir, "simulate-results.R"))
+```
+
+# Inspect teacher outputs
+
+After running the tutorial or the simulation:
+
+```{r inspect, eval = FALSE}
+source(file.path(example_dir, "inspect-results.R"))
+```
+
+The inspection script writes attempts, scores, gradebook rows, Moodle-ready
+grades, a rich export bundle, and an HTML teacher report when `rmarkdown` is
+available.
+
+# Dashboard
+
+The same database can be opened with the local teacher dashboard:
+
+```{r dashboard, eval = FALSE}
+run_dashboard(Sys.getenv("LEARNRTRACKR_DB"), group_id = "A")
+```
+
+The dashboard is a local inspection interface for prototypes. It does not
+replace institutional authentication.
