@@ -160,6 +160,33 @@ test_that("export_moodle_grades writes a Moodle-ready CSV", {
   expect_equal(grades[["Module 01 quiz"]], 50)
 })
 
+test_that("moodle_grades filters by registered group", {
+  db_path <- withr::local_tempfile(fileext = ".sqlite")
+  con <- init_tracking_db(db_path, overwrite = TRUE)
+  withr::defer(DBI::dbDisconnect(con))
+
+  register_students(
+    con,
+    data.frame(
+      student_id = c("student_001", "student_002", "student_003"),
+      group_id = c("A", "B", "A")
+    )
+  )
+  register_questions(con, "module_01", c("q1", "q2"))
+  track_attempt(con, "student_001", "module_01", "q1", "mean(x)", score = 1, max_score = 1)
+  track_attempt(con, "student_002", "module_01", "q1", "sd(x)", score = 0, max_score = 1)
+
+  grades <- moodle_grades(
+    con,
+    tutorial_id = "module_01",
+    grade_item = "Module 01 quiz",
+    group_id = "A"
+  )
+
+  expect_equal(grades$useridnumber, c("student_001", "student_003"))
+  expect_false("student_002" %in% grades$useridnumber)
+})
+
 test_that("tracking_export_data filters by group and student", {
   db_path <- withr::local_tempfile(fileext = ".sqlite")
   con <- init_tracking_db(db_path, overwrite = TRUE)

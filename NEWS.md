@@ -3,6 +3,7 @@
 - Added a course pilot example showing a realistic tracked `learnr` tutorial,
   CSV configuration, simulated learner results, Moodle export, and teacher
   report generation.
+- Added group filtering to `moodle_grades()` and `export_moodle_grades()`.
 
 # learnrTrackR 0.1.1
 

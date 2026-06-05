@@ -57,7 +57,8 @@ run_course_pilot_inspection <- function() {
     con,
     moodle_path,
     tutorial_id = tutorial_id,
-    grade_item = "Descriptive statistics pilot"
+    grade_item = "Descriptive statistics pilot",
+    group_id = group_filter
   )
   bundle_paths <- learnrTrackR::export_tracking_bundle(
     con,

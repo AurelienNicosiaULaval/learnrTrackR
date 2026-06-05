@@ -12,7 +12,8 @@ moodle_grades(
   id_column = "useridnumber",
   grade_value = c("percent", "score"),
   digits = 2,
-  include_unregistered = TRUE
+  include_unregistered = TRUE,
+  group_id = NULL
 )
 }
 \arguments{
@@ -37,6 +38,9 @@ identifiers.}
 
 \item{include_unregistered}{If \code{TRUE}, include attempted questions that were
 not registered with \code{\link[=register_questions]{register_questions()}}.}
+
+\item{group_id}{Optional registered student group identifier. If supplied,
+only students in that registered group are exported.}
 }
 \value{
 A tibble with one row per student.

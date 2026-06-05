@@ -79,4 +79,11 @@ test_that("course pilot simulation writes teacher outputs", {
 
   expect_true(all(file.exists(expected_files)))
   expect_true(dir.exists(file.path(output_dir, "course-pilot-bundle")))
+
+  moodle <- readr::read_csv(
+    file.path(output_dir, "course-pilot-moodle.csv"),
+    show_col_types = FALSE
+  )
+  expect_setequal(moodle$useridnumber, c("student_demo", "student_a01", "student_a02"))
+  expect_false("student_b01" %in% moodle$useridnumber)
 })

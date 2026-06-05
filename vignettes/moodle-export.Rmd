@@ -124,6 +124,18 @@ readr::read_csv(csv_path, show_col_types = FALSE)
 Use `grade_value = "percent"` for a 0 to 100 grade, or `grade_value = "score"`
 for the raw gradebook score.
 
+If the database contains several registered groups, use `group_id` to export
+only one cohort:
+
+```{r group-export}
+moodle_grades(
+  con,
+  tutorial_id = "module_01",
+  grade_item = "Module 01 quiz",
+  group_id = "A"
+)
+```
+
 # Suggested Moodle import workflow
 
 Before importing into a real course:

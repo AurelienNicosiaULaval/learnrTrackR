@@ -35,6 +35,8 @@ format_grade_values <- function(values, digits) {
 #'   `NULL` to disable rounding.
 #' @param include_unregistered If `TRUE`, include attempted questions that were
 #'   not registered with [register_questions()].
+#' @param group_id Optional registered student group identifier. If supplied,
+#'   only students in that registered group are exported.
 #'
 #' @return A tibble with one row per student.
 #' @export
@@ -53,7 +55,8 @@ moodle_grades <- function(con,
                           id_column = "useridnumber",
                           grade_value = c("percent", "score"),
                           digits = 2,
-                          include_unregistered = TRUE) {
+                          include_unregistered = TRUE,
+                          group_id = NULL) {
   check_required_tables(con)
 
   tutorial_id <- validate_scalar_character(tutorial_id, arg = "tutorial_id")
@@ -70,6 +73,7 @@ moodle_grades <- function(con,
     include_unregistered,
     arg = "include_unregistered"
   )
+  group_id <- normalize_dashboard_group_id(group_id)
 
   if (is.null(grade_item)) {
     grade_item <- tutorial_id
@@ -81,12 +85,27 @@ moodle_grades <- function(con,
     )
   }
 
-  grades <- gradebook(
-    con,
-    tutorial_id = tutorial_id,
-    rule = rule,
-    include_unregistered = include_unregistered
-  )
+  if (is.null(group_id)) {
+    grades <- gradebook(
+      con,
+      tutorial_id = tutorial_id,
+      rule = rule,
+      include_unregistered = include_unregistered
+    )
+  } else {
+    student_ids <- resolve_export_student_ids(
+      con,
+      tutorial_id = tutorial_id,
+      group_id = group_id
+    )
+    grades <- dashboard_gradebook(
+      con = con,
+      tutorial_id = tutorial_id,
+      student_ids = student_ids,
+      rule = rule,
+      include_unregistered = include_unregistered
+    )
+  }
 
   if (nrow(grades) == 0) {
     out <- tibble::tibble(
@@ -131,7 +150,8 @@ export_moodle_grades <- function(con,
                                  id_column = "useridnumber",
                                  grade_value = c("percent", "score"),
                                  digits = 2,
-                                 include_unregistered = TRUE) {
+                                 include_unregistered = TRUE,
+                                 group_id = NULL) {
   path <- validate_path(path)
 
   parent_dir <- dirname(path)
@@ -147,7 +167,8 @@ export_moodle_grades <- function(con,
     id_column = id_column,
     grade_value = grade_value,
     digits = digits,
-    include_unregistered = include_unregistered
+    include_unregistered = include_unregistered,
+    group_id = group_id
   )
 
   readr::write_csv(data, path)
