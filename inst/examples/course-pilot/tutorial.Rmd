@@ -1,0 +1,299 @@
+---
+title: "Course pilot: descriptive statistics with R"
+output:
+  learnr::tutorial:
+    progressive: true
+    allow_skip: true
+runtime: shiny_prerendered
+description: "A course-like learnr pilot using explicit learnrTrackR tracking, CSV configuration, and gradethis checks."
+---
+
+```{r setup, include=FALSE}
+library(learnr)
+library(gradethis)
+library(learnrTrackR)
+library(dplyr)
+library(tibble)
+
+gradethis_setup()
+knitr::opts_chunk$set(echo = FALSE)
+
+resolve_example_dir <- function() {
+  env_dir <- Sys.getenv("LEARNRTRACKR_EXAMPLE_DIR", unset = "")
+  if (nzchar(env_dir)) {
+    return(env_dir)
+  }
+
+  installed_dir <- system.file("examples/course-pilot", package = "learnrTrackR")
+  if (nzchar(installed_dir)) {
+    return(installed_dir)
+  }
+
+  input <- knitr::current_input()
+  if (!is.null(input) && nzchar(input)) {
+    return(dirname(input))
+  }
+
+  "."
+}
+
+example_dir <- resolve_example_dir()
+source(file.path(example_dir, "pilot-data.R"))
+
+tutorial_id <- "stat_descriptive_pilot"
+tracking_env <- learnrTrackR::get_learnr_tracking_env(
+  default_db_path = file.path(tempdir(), "learnrtrackr-course-pilot.sqlite"),
+  default_group_id = "A"
+)
+
+tracking <- learnrTrackR::setup_learnr_tracking(
+  tutorial_id = tutorial_id,
+  student_id = tracking_env$student_id,
+  db_path = tracking_env$db_path,
+  group_id = tracking_env$group_id,
+  config_path = file.path(example_dir, "config-csv")
+)
+
+open_tracking_db <- function() {
+  learnrTrackR::open_learnr_tracking_db(tracking)
+}
+```
+
+## Identification
+
+The tutorial reads the learner identifier, group, and database path from the
+launch environment. For local testing, set `LEARNRTRACKR_STUDENT_ID`,
+`LEARNRTRACKR_GROUP_ID`, and `LEARNRTRACKR_DB` before launching the tutorial.
+
+```{r show-launch}
+tibble::tibble(
+  student_id = tracking$student_id,
+  group_id = tracking$group_id,
+  tutorial_id = tracking$tutorial_id,
+  db_path = tracking$db_path
+)
+```
+
+## Data
+
+The data set is simulated. Each row represents one fictitious learner case from
+a small course pilot.
+
+```{r show-data}
+pilot_survey
+```
+
+## Question 1
+
+```{r q1_variable_type, echo=FALSE}
+learnrTrackR::tracked_question(
+  "Which variable is quantitative?",
+  learnr::answer("learner_case"),
+  learnr::answer("region"),
+  learnr::answer("study_hours", correct = TRUE, message = "Correct."),
+  learnr::answer("program"),
+  type = "radio",
+  allow_retry = TRUE,
+  try_again = "Try again. Look for a variable measured on a numeric scale.",
+  question_id = "q1_variable_type",
+  context = tracking,
+  max_score = 1
+)
+```
+
+## Question 2
+
+```{r q2_robust_summaries, echo=FALSE}
+learnrTrackR::tracked_question(
+  "Which summaries are usually robust to extreme values?",
+  learnr::answer("Mean"),
+  learnr::answer("Median", correct = TRUE),
+  learnr::answer("Standard deviation"),
+  learnr::answer("Interquartile range", correct = TRUE),
+  type = "checkbox",
+  allow_retry = TRUE,
+  try_again = "Try again. Robust summaries should not change too much when one value is extreme.",
+  question_id = "q2_robust_summaries",
+  context = tracking,
+  max_score = 1
+)
+```
+
+## Question 3
+
+```{r q3_n_rows, echo=FALSE}
+learnrTrackR::tracked_question(
+  "How many rows are in the pilot data set?",
+  learnr::answer(12, correct = TRUE, message = "Correct."),
+  type = "numeric",
+  allow_retry = TRUE,
+  min = 0,
+  max = 30,
+  step = 1,
+  question_id = "q3_n_rows",
+  context = tracking,
+  max_score = 1
+)
+```
+
+## Question 4
+
+```{r q4_highest_median, echo=FALSE}
+learnrTrackR::tracked_question(
+  "Which region has the highest median study_hours value?",
+  learnr::answer_fn(
+    function(value) {
+      answer <- tolower(trimws(value))
+      if (answer == "sherbrooke") {
+        learnr::correct("Correct. Sherbrooke has the highest median study_hours value.")
+      } else {
+        learnr::incorrect("Try again. Compute the median study_hours value by region.")
+      }
+    },
+    label = "highest median checker"
+  ),
+  type = "text",
+  allow_retry = TRUE,
+  question_id = "q4_highest_median",
+  context = tracking,
+  max_score = 1
+)
+```
+
+## Code exercise 1
+
+Compute the mean of `study_hours`.
+
+```{r q5_mean_study_hours, exercise=TRUE}
+mean(pilot_survey$study_hours)
+```
+
+```{r q5_mean_study_hours-solution}
+mean(pilot_survey$study_hours)
+```
+
+```{r q5_mean_study_hours-check}
+gradethis::grade_this({
+  expected <- mean(pilot_survey$study_hours)
+  correct <- is.numeric(.result) && isTRUE(all.equal(.result, expected))
+  feedback <- if (correct) {
+    "Correct. This is the mean study time across all rows."
+  } else {
+    "Try again. Use mean(pilot_survey$study_hours)."
+  }
+
+  learnrTrackR::track_gradethis_attempt(
+    context = tracking,
+    question_id = "q5_mean_study_hours",
+    submitted_answer = .user_code,
+    correct = correct,
+    feedback = feedback,
+    max_score = 1
+  )
+})
+```
+
+## Code exercise 2
+
+Create one row per region with:
+
+- `region`
+- `n`
+- `median_study_hours`
+- `mean_quiz_score`
+
+```{r q6_region_summary, exercise=TRUE}
+pilot_survey |>
+  group_by(region) |>
+  summarise(
+    n = n(),
+    median_study_hours = median(study_hours),
+    mean_quiz_score = mean(quiz_score),
+    .groups = "drop"
+  )
+```
+
+```{r q6_region_summary-solution}
+pilot_survey |>
+  group_by(region) |>
+  summarise(
+    n = n(),
+    median_study_hours = median(study_hours),
+    mean_quiz_score = mean(quiz_score),
+    .groups = "drop"
+  )
+```
+
+```{r q6_region_summary-check}
+gradethis::grade_this({
+  expected <- pilot_survey |>
+    dplyr::group_by(region) |>
+    dplyr::summarise(
+      n = dplyr::n(),
+      median_study_hours = median(study_hours),
+      mean_quiz_score = mean(quiz_score),
+      .groups = "drop"
+    ) |>
+    dplyr::arrange(region)
+
+  candidate <- tryCatch(
+    {
+      .result |>
+        as.data.frame() |>
+        dplyr::arrange(region)
+    },
+    error = function(cnd) NULL
+  )
+
+  required_columns <- c("region", "n", "median_study_hours", "mean_quiz_score")
+  has_required_columns <- !is.null(candidate) &&
+    all(required_columns %in% names(candidate))
+
+  correct <- has_required_columns &&
+    nrow(candidate) == nrow(expected) &&
+    isTRUE(all.equal(candidate$n, expected$n)) &&
+    isTRUE(all.equal(candidate$median_study_hours, expected$median_study_hours)) &&
+    isTRUE(all.equal(candidate$mean_quiz_score, expected$mean_quiz_score))
+
+  score <- if (correct) {
+    2
+  } else if (has_required_columns) {
+    1
+  } else {
+    0
+  }
+
+  grade_status <- if (correct) {
+    "correct"
+  } else if (score > 0) {
+    "partial"
+  } else {
+    "incorrect"
+  }
+
+  feedback <- if (correct) {
+    "Correct. The grouped summary matches the expected result."
+  } else if (has_required_columns) {
+    "Partial credit. The expected columns are present, but at least one value differs."
+  } else {
+    "Try again. Create the columns region, n, median_study_hours, and mean_quiz_score."
+  }
+
+  learnrTrackR::track_gradethis_attempt(
+    context = tracking,
+    question_id = "q6_region_summary",
+    submitted_answer = .user_code,
+    correct = correct,
+    score = score,
+    max_score = 2,
+    grade_status = grade_status,
+    feedback = feedback
+  )
+})
+```
+
+## Teacher outputs
+
+After learner attempts have been recorded, use `inspect-results.R` in this
+example directory to create attempts, scores, gradebook, Moodle, bundle, and
+teacher report outputs.

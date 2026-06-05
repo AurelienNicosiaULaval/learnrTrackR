@@ -1,0 +1,82 @@
+course_pilot_example_dir <- function() {
+  installed_dir <- system.file("examples/course-pilot", package = "learnrTrackR")
+  if (nzchar(installed_dir)) {
+    return(installed_dir)
+  }
+
+  normalizePath(
+    file.path("..", "..", "inst", "examples", "course-pilot"),
+    mustWork = TRUE
+  )
+}
+
+test_that("course pilot configuration is coherent", {
+  example_dir <- course_pilot_example_dir()
+  config <- read_tracking_config(file.path(example_dir, "config-csv"))
+
+  expect_equal(config$courses$course_id, "stat_intro")
+  expect_equal(config$tutorials$tutorial_id, "stat_descriptive_pilot")
+  expect_equal(nrow(config$students), 4)
+  expect_equal(nrow(config$questions), 6)
+  expect_equal(sum(config$questions$max_score), 7)
+  expect_true(all(config$questions$tutorial_id == "stat_descriptive_pilot"))
+})
+
+test_that("course pilot data support the tutorial answers", {
+  example_dir <- course_pilot_example_dir()
+  source(file.path(example_dir, "pilot-data.R"), local = TRUE)
+
+  region_summary <- pilot_survey |>
+    dplyr::group_by(region) |>
+    dplyr::summarise(
+      median_study_hours = median(study_hours),
+      .groups = "drop"
+    ) |>
+    dplyr::arrange(dplyr::desc(median_study_hours))
+
+  expect_equal(nrow(pilot_survey), 12)
+  expect_equal(region_summary$region[[1]], "Sherbrooke")
+  expect_equal(mean(pilot_survey$study_hours), 77 / 12)
+})
+
+test_that("course pilot simulation writes teacher outputs", {
+  example_dir <- course_pilot_example_dir()
+  db_path <- withr::local_tempfile(fileext = ".sqlite")
+  output_dir <- withr::local_tempdir()
+
+  withr::local_envvar(
+    LEARNRTRACKR_EXAMPLE_DIR = example_dir,
+    LEARNRTRACKR_DB = db_path,
+    LEARNRTRACKR_OUTPUT_DIR = output_dir,
+    LEARNRTRACKR_GROUP_ID = "A"
+  )
+
+  invisible(capture.output(suppressMessages(
+    source(file.path(example_dir, "simulate-results.R"), local = new.env(parent = globalenv()))
+  )))
+
+  con <- connect_tracking_db(db_path)
+  withr::defer(DBI::dbDisconnect(con))
+
+  grades <- gradebook(con, tutorial_id = "stat_descriptive_pilot", rule = "last")
+  expect_equal(nrow(get_attempts(con, tutorial_id = "stat_descriptive_pilot")), 18)
+  expect_equal(nrow(grades), 4)
+  expect_equal(max(grades$max_score), 7)
+
+  invisible(capture.output(suppressMessages(
+    source(file.path(example_dir, "inspect-results.R"), local = new.env(parent = globalenv()))
+  )))
+
+  expected_files <- file.path(
+    output_dir,
+    c(
+      "course-pilot-attempts.csv",
+      "course-pilot-scores.csv",
+      "course-pilot-gradebook.csv",
+      "course-pilot-moodle.csv"
+    )
+  )
+
+  expect_true(all(file.exists(expected_files)))
+  expect_true(dir.exists(file.path(output_dir, "course-pilot-bundle")))
+})

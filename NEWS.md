@@ -1,3 +1,9 @@
+# learnrTrackR 0.1.1.9000
+
+- Added a course pilot example showing a realistic tracked `learnr` tutorial,
+  CSV configuration, simulated learner results, Moodle export, and teacher
+  report generation.
+
 # learnrTrackR 0.1.1
 
 - Added `setup_learnr_tracking()` and `open_learnr_tracking_db()` to simplify

@@ -41,6 +41,8 @@ store simulated attempts and export results for inspection.
 - Provide a minimal example and unit tests.
 - Provide a minimal `learnr` and `gradethis` prototype for tracked
   questions and code exercises.
+- Provide a course pilot example with CSV configuration, simulated learner
+  results, Moodle export, and teacher report generation.
 
 ## What the MVP does not do yet
 
@@ -223,6 +225,36 @@ load_tracking_config(con, "tracking.yml")
 
 The minimal `learnr` example includes both a YAML configuration file and a CSV
 configuration directory.
+
+## Course pilot example
+
+A course-like pilot is available in `inst/examples/course-pilot/`. It contains
+a simulated descriptive statistics tutorial with tracked `learnr` questions,
+tracked `gradethis` code exercises, CSV configuration files, a cohort
+simulation script, Moodle export, and teacher report generation.
+
+To create simulated pilot results:
+
+```r
+source("inst/examples/course-pilot/simulate-results.R")
+source("inst/examples/course-pilot/inspect-results.R")
+```
+
+The tutorial can also be launched manually:
+
+```r
+Sys.setenv(
+  LEARNRTRACKR_DB = file.path(tempdir(), "learnrtrackr-course-pilot.sqlite"),
+  LEARNRTRACKR_STUDENT_ID = "student_demo",
+  LEARNRTRACKR_GROUP_ID = "A"
+)
+
+learnr::run_tutorial(
+  "inst/examples/course-pilot/tutorial.Rmd",
+  clean = TRUE,
+  as_rstudio_job = FALSE
+)
+```
 
 ## PostgreSQL prototype
 

@@ -12,6 +12,7 @@ articles:
   contents:
   - getting-started
   - learnr-context
+  - course-pilot
   - teacher-workflow
   - moodle-export
   - deployment-postgresql

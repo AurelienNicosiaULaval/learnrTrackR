@@ -1,0 +1,7 @@
+tutorial_id,question_id,question_label,question_type,max_score
+stat_descriptive_pilot,q1_variable_type,Identify a quantitative variable,radio,1
+stat_descriptive_pilot,q2_robust_summaries,Choose robust summary statistics,checkbox,1
+stat_descriptive_pilot,q3_n_rows,Count data rows,numeric,1
+stat_descriptive_pilot,q4_highest_median,Identify the highest median region,text,1
+stat_descriptive_pilot,q5_mean_study_hours,Compute mean study hours,code,1
+stat_descriptive_pilot,q6_region_summary,Summarise study hours by region,code,2
