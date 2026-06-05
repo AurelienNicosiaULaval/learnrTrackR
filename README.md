@@ -338,9 +338,10 @@ The four built-in `learnr` question families can be tracked with
 `tracked_question()`, or with the explicit wrappers
 `tracked_question_radio()`, `tracked_question_checkbox()`,
 `tracked_question_text()`, and `tracked_question_numeric()`.
-Use `setup_learnr_tracking()` in a tutorial setup chunk to initialize the
-database, load configuration, register the current learner, and pass the
-returned context to tracked questions.
+Use `get_learnr_tracking_env()` to validate the launch environment, then
+`setup_learnr_tracking()` in a tutorial setup chunk to initialize the database,
+load configuration, register the current learner, and pass the returned context
+to tracked questions.
 
 For a compact guide to this workflow, see:
 

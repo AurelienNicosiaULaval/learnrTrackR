@@ -4,14 +4,23 @@
 
 The prototype uses two R-side strategies.
 
-The setup chunk first creates a reusable tracking context:
+The setup chunk first reads and validates the launch environment:
+
+```r
+tracking_env <- learnrTrackR::get_learnr_tracking_env(
+  default_db_path = file.path(tempdir(), "learnrtrackr-minimal.sqlite"),
+  default_group_id = "demo_group"
+)
+```
+
+It then creates a reusable tracking context:
 
 ```r
 tracking <- learnrTrackR::setup_learnr_tracking(
   tutorial_id = tutorial_id,
-  student_id = student_id,
-  db_path = tracking_db_path,
-  group_id = student_group_id,
+  student_id = tracking_env$student_id,
+  db_path = tracking_env$db_path,
+  group_id = tracking_env$group_id,
   config_path = tracking_config_path
 )
 ```

@@ -1,6 +1,8 @@
 url: https://aureliennicosiaulaval.github.io/learnrTrackR/
 template:
   bootstrap: 5
+news:
+  cran_dates: false
 navbar:
   structure:
     left: [intro, articles, reference, news]
@@ -50,6 +52,7 @@ reference:
   - export_tracking_bundle
 - title: learnr helpers
   contents:
+  - get_learnr_tracking_env
   - setup_learnr_tracking
   - open_learnr_tracking_db
   - tracked_question

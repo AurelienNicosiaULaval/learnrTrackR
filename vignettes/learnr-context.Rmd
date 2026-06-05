@@ -26,21 +26,38 @@ The workflow is designed for local teaching prototypes and early course
 experiments where the learner identifier is supplied by the tutorial launch
 environment.
 
-# Create the context
+# Read the launch environment
 
-In a tutorial, the setup chunk should create one context and keep it available
-to later question and check chunks.
+In a tutorial, the setup chunk should first validate the launch environment.
+For a local prototype, `default_db_path` and `default_group_id` can be used as
+fallbacks.
 
 ```{r setup}
 library(learnrTrackR)
 
 db_path <- tempfile(fileext = ".sqlite")
 
+withr::local_envvar(LEARNRTRACKR_STUDENT_ID = "student_001")
+
+tracking_env <- get_learnr_tracking_env(
+  default_db_path = db_path,
+  default_group_id = "A"
+)
+
+tracking_env
+```
+
+# Create the context
+
+The setup chunk should create one context and keep it available to later
+question and check chunks.
+
+```{r context}
 tracking <- setup_learnr_tracking(
   tutorial_id = "module_01",
-  student_id = "student_001",
-  db_path = db_path,
-  group_id = "A"
+  student_id = tracking_env$student_id,
+  db_path = tracking_env$db_path,
+  group_id = tracking_env$group_id
 )
 
 tracking
@@ -150,14 +167,14 @@ A real tutorial setup chunk usually reads `student_id`, `group_id`, and
 `db_path` from environment variables:
 
 ```{r setup-pattern, eval = FALSE}
-student_id <- learnrTrackR::get_tracking_student_id()
 tutorial_id <- "module_01"
+tracking_env <- learnrTrackR::get_learnr_tracking_env()
 
 tracking <- learnrTrackR::setup_learnr_tracking(
   tutorial_id = tutorial_id,
-  student_id = student_id,
-  db_path = Sys.getenv("LEARNRTRACKR_DB"),
-  group_id = Sys.getenv("LEARNRTRACKR_GROUP_ID", unset = NA_character_),
+  student_id = tracking_env$student_id,
+  db_path = tracking_env$db_path,
+  group_id = tracking_env$group_id,
   config_path = "config"
 )
 ```

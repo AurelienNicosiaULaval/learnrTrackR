@@ -46,8 +46,8 @@ learnr::run_tutorial(
 ```
 
 The `LEARNRTRACKR_STUDENT_ID` value is required. The tutorial uses
-`get_tracking_student_id()` and stops with an informative error if the variable
-is missing or empty. The tutorial creates a context with
+`get_learnr_tracking_env()` and stops with an informative error if required
+launch values are missing or empty. The tutorial creates a context with
 `setup_learnr_tracking()`, registers the current learner, and loads the
 expected course, tutorial, student, and question metadata from the CSV
 configuration directory.

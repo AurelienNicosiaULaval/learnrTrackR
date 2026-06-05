@@ -19,12 +19,13 @@ gradethis_setup()
 knitr::opts_chunk$set(echo = FALSE)
 
 tutorial_id <- "minimal_learnr"
-student_id <- learnrTrackR::get_tracking_student_id()
-student_group_id <- Sys.getenv("LEARNRTRACKR_GROUP_ID", unset = "demo_group")
-tracking_db_path <- Sys.getenv(
-  "LEARNRTRACKR_DB",
-  unset = file.path(tempdir(), "learnrtrackr-minimal.sqlite")
+tracking_env <- learnrTrackR::get_learnr_tracking_env(
+  default_db_path = file.path(tempdir(), "learnrtrackr-minimal.sqlite"),
+  default_group_id = "demo_group"
 )
+student_id <- tracking_env$student_id
+student_group_id <- tracking_env$group_id
+tracking_db_path <- tracking_env$db_path
 tracking_config_dir <- system.file(
   "examples/minimal-learnr/config-csv",
   package = "learnrTrackR"
