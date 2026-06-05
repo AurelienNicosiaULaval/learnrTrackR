@@ -1,6 +1,6 @@
 Package: learnrTrackR
 Title: Track Simulated learnr Tutorial Attempts
-Version: 0.1.1.9000
+Version: 0.1.1
 Authors@R:
     person("Aurélien", "Nicosia", , "116816597+AurelienNicosiaULaval@users.noreply.github.com",
            role = c("aut", "cre"))

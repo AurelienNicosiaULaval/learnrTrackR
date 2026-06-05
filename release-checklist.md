@@ -1,7 +1,7 @@
 # Checklist de publication learnrTrackR
 
-Cette checklist prépare une première publication GitHub de `learnrTrackR`
-comme jalon `0.1.0`. Elle ne suppose pas qu'un remote GitHub existe déjà.
+Cette checklist prépare une publication GitHub de `learnrTrackR`. Elle ne
+suppose pas qu'un remote GitHub existe déjà.
 
 ## Vérifications locales
 
@@ -27,14 +27,13 @@ git status --short
 
 ## Version
 
-La version courante dans `DESCRIPTION` est `0.1.0`.
-
 Avant de créer un tag:
 
-1. Vérifier que `NEWS.md` contient une section `learnrTrackR 0.1.0`.
-2. Vérifier que les exemples installés sous `inst/examples/` sont à jour.
-3. Vérifier que `privacy.md` et les vignettes sont cohérents.
-4. Vérifier que les tests PostgreSQL réels sont sautés ou exécutés avec une
+1. Vérifier que `DESCRIPTION` contient la version à publier.
+2. Vérifier que `NEWS.md` contient une section pour la version à publier.
+3. Vérifier que les exemples installés sous `inst/examples/` sont à jour.
+4. Vérifier que `privacy.md` et les vignettes sont cohérents.
+5. Vérifier que les tests PostgreSQL réels sont sautés ou exécutés avec une
    base jetable.
 
 ## GitHub
@@ -46,11 +45,12 @@ git remote add origin git@github.com:AurelienNicosiaULaval/learnrTrackR.git
 git push -u origin main
 ```
 
-Créer un tag local et le pousser:
+Créer un tag local et le pousser, en remplaçant `vX.Y.Z` par la version
+publiée:
 
 ```sh
-git tag -a v0.1.0 -m "learnrTrackR 0.1.0"
-git push origin v0.1.0
+git tag -a vX.Y.Z -m "learnrTrackR X.Y.Z"
+git push origin vX.Y.Z
 ```
 
 ## GitHub Actions

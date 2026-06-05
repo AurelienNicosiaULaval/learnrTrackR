@@ -1,4 +1,4 @@
-# learnrTrackR 0.1.1.9000
+# learnrTrackR 0.1.1
 
 - Added `setup_learnr_tracking()` and `open_learnr_tracking_db()` to simplify
   explicit `learnr` tutorial setup.
