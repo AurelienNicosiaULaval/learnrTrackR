@@ -287,6 +287,20 @@ vignette("deployment-postgresql", package = "learnrTrackR")
 The Docker Compose example is included in
 `inst/examples/postgres-docker/`.
 
+The same Docker example also includes a controlled course pilot rehearsal:
+
+```sh
+cd inst/examples/postgres-docker
+cp env.example .env
+docker compose --env-file .env up -d
+Rscript course-pilot-smoke-test.R
+```
+
+The pilot smoke test loads the `course-pilot` CSV configuration, records the
+simulated cohort in PostgreSQL, prepares dashboard data, writes Moodle-ready
+grades filtered by group, writes an export bundle, and renders an HTML teacher
+report when `rmarkdown` is installed.
+
 ## Privacy utilities
 
 Student-level records can be deleted, pseudonymised, or stripped of direct

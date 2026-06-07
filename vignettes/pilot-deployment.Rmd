@@ -1,0 +1,168 @@
+---
+title: "Controlled pilot deployment"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Controlled pilot deployment}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+# Scope
+
+This guide describes a controlled pilot deployment rehearsal for
+`learnrTrackR`. It uses the simulated course pilot, PostgreSQL, environment
+variables, teacher exports, Moodle-ready CSV output, dashboard data, and an
+HTML teacher report.
+
+The workflow is intended for development, local rehearsal, and small controlled
+pilots. It is not an institutional authentication layer and it is not a
+production LMS.
+
+# Example directories
+
+```{r locate}
+library(learnrTrackR)
+
+postgres_dir <- system.file("examples/postgres-docker", package = "learnrTrackR")
+course_pilot_dir <- system.file("examples/course-pilot", package = "learnrTrackR")
+
+postgres_dir
+course_pilot_dir
+```
+
+# Environment variables
+
+The PostgreSQL Docker example includes an `env.example` file. Copy it to `.env`
+before launching the service:
+
+```{sh copy-env, eval = FALSE}
+cp env.example .env
+```
+
+The important pilot variables are:
+
+```text
+LEARNRTRACKR_POSTGRES_DB=learnrtrackr
+LEARNRTRACKR_POSTGRES_USER=learnrtrackr
+LEARNRTRACKR_POSTGRES_PASSWORD=replace-with-a-long-random-password
+LEARNRTRACKR_POSTGRES_HOST=127.0.0.1
+LEARNRTRACKR_POSTGRES_PORT=5432
+LEARNRTRACKR_POSTGRES_SCHEMA=learnrtrackr_pilot
+LEARNRTRACKR_PILOT_GROUP_ID=A
+LEARNRTRACKR_PILOT_OUTPUT_DIR=pilot-outputs
+LEARNRTRACKR_PILOT_RESET=true
+LEARNRTRACKR_DASHBOARD_TOKEN=replace-with-a-long-random-dashboard-token
+```
+
+Do not commit `.env` files, database dumps, or exported student results.
+
+# Start PostgreSQL
+
+From `inst/examples/postgres-docker/`:
+
+```{sh start-postgres, eval = FALSE}
+docker compose --env-file .env up -d
+```
+
+The Compose file starts one local PostgreSQL service. The pilot smoke test uses
+the schema named by `LEARNRTRACKR_POSTGRES_SCHEMA`. When
+`LEARNRTRACKR_PILOT_RESET=true`, that schema is dropped and recreated before
+the simulated pilot is inserted.
+
+# Run the pilot smoke test
+
+```{sh smoke-test, eval = FALSE}
+Rscript course-pilot-smoke-test.R
+```
+
+The smoke test:
+
+1. connects to PostgreSQL;
+2. prepares the pilot schema;
+3. loads the course, tutorial, student, and question CSV configuration;
+4. records the simulated cohort attempts;
+5. prepares dashboard data with `dashboard_data(con, ...)`;
+6. writes attempts, scores, gradebook, Moodle-ready grades, and a rich export
+   bundle;
+7. renders an HTML teacher report when `rmarkdown` is installed.
+
+# Inspect the teacher outputs
+
+By default, outputs are written to:
+
+```text
+inst/examples/postgres-docker/pilot-outputs/
+```
+
+Expected files include:
+
+```text
+course-pilot-attempts.csv
+course-pilot-scores.csv
+course-pilot-gradebook.csv
+course-pilot-moodle.csv
+course-pilot-teacher-report.html
+course-pilot-bundle/
+```
+
+The Moodle CSV is filtered by `LEARNRTRACKR_PILOT_GROUP_ID`. For example,
+`LEARNRTRACKR_PILOT_GROUP_ID=A` exports only the configured group A learners.
+
+# Dashboard status
+
+The pilot verifies dashboard tables with:
+
+```{r dashboard-data, eval = FALSE}
+dashboard_data(
+  con,
+  tutorial_id = "stat_descriptive_pilot",
+  group_id = "A",
+  rule = "last"
+)
+```
+
+The current interactive launcher `run_dashboard()` still expects a SQLite
+database path. A PostgreSQL-aware dashboard launcher is a separate future
+development step.
+
+# Teacher launch checklist
+
+Before a real controlled pilot:
+
+1. choose the student identifier used for Moodle matching;
+2. prepare `students.csv` with only necessary student metadata;
+3. set a PostgreSQL password that is not committed to Git;
+4. use a dedicated PostgreSQL database or schema;
+5. run `course-pilot-smoke-test.R`;
+6. inspect `course-pilot-moodle.csv` before importing;
+7. inspect the teacher report before using results for teaching decisions;
+8. document who can access exports and how long files are retained.
+
+# Stop PostgreSQL
+
+```{sh stop-postgres, eval = FALSE}
+docker compose --env-file .env down
+```
+
+To delete the local data volume:
+
+```{sh stop-postgres-volume, eval = FALSE}
+docker compose --env-file .env down -v
+```
+
+# References
+
+- PostgreSQL Global Development Group. Accessed 2026-06-04. libpq environment
+  variables.
+  <https://www.postgresql.org/docs/current/libpq-envars.htm>
+- Docker Inc. Accessed 2026-06-04. Compose file reference.
+  <https://docs.docker.com/compose/compose-file/>
+- Docker Inc. Accessed 2026-06-04. postgres official image.
+  <https://hub.docker.com/_/postgres>

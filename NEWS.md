@@ -4,6 +4,7 @@
   CSV configuration, simulated learner results, Moodle export, and teacher
   report generation.
 - Added group filtering to `moodle_grades()` and `export_moodle_grades()`.
+- Added a controlled PostgreSQL pilot deployment smoke test and vignette.
 
 # learnrTrackR 0.1.1
 

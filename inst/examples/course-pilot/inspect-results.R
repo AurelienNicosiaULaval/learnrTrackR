@@ -1,3 +1,33 @@
+course_pilot_script_file <- tryCatch(
+  {
+    script_file <- sys.frame(1)$ofile
+    if (is.null(script_file)) {
+      ""
+    } else {
+      normalizePath(script_file, mustWork = FALSE)
+    }
+  },
+  error = function(cnd) ""
+)
+
+resolve_course_pilot_dir <- function(script_file = course_pilot_script_file) {
+  env_dir <- Sys.getenv("LEARNRTRACKR_EXAMPLE_DIR", unset = "")
+  if (nzchar(env_dir)) {
+    return(env_dir)
+  }
+
+  installed_dir <- system.file("examples/course-pilot", package = "learnrTrackR")
+  if (nzchar(installed_dir)) {
+    return(installed_dir)
+  }
+
+  if (nzchar(script_file)) {
+    return(dirname(script_file))
+  }
+
+  "."
+}
+
 run_course_pilot_inspection <- function() {
   tutorial_id <- "stat_descriptive_pilot"
   db_path <- Sys.getenv(
@@ -24,92 +54,35 @@ run_course_pilot_inspection <- function() {
     dir.create(output_dir, recursive = TRUE)
   }
 
+  example_dir <- resolve_course_pilot_dir()
+  source(file.path(example_dir, "pilot-workflow.R"))
+
   con <- learnrTrackR::connect_tracking_db(db_path)
   on.exit(DBI::dbDisconnect(con), add = TRUE)
 
-  attempts <- learnrTrackR::get_attempts(con, tutorial_id = tutorial_id)
-  scores <- learnrTrackR::compute_scores(con, tutorial_id = tutorial_id, rule = "last")
-  grades <- learnrTrackR::gradebook(con, tutorial_id = tutorial_id, rule = "last")
-  dashboard <- learnrTrackR::dashboard_data(
-    con,
-    tutorial_id = tutorial_id,
-    group_id = group_filter,
-    rule = "last"
-  )
-  report <- learnrTrackR::teacher_report_data(
-    con,
+  outputs <- course_pilot_teacher_outputs(
+    con = con,
+    output_dir = output_dir,
     tutorial_id = tutorial_id,
     group_id = group_filter,
     rule = "last"
   )
 
-  attempts_path <- file.path(output_dir, "course-pilot-attempts.csv")
-  scores_path <- file.path(output_dir, "course-pilot-scores.csv")
-  gradebook_path <- file.path(output_dir, "course-pilot-gradebook.csv")
-  moodle_path <- file.path(output_dir, "course-pilot-moodle.csv")
-  bundle_dir <- file.path(output_dir, "course-pilot-bundle")
-  report_path <- file.path(output_dir, "course-pilot-teacher-report.html")
+  print(outputs$attempts)
+  print(outputs$scores)
+  print(outputs$gradebook)
+  print(outputs$dashboard$summary)
+  print(outputs$report$summary)
 
-  learnrTrackR::export_results(con, attempts_path, type = "attempts", tutorial_id = tutorial_id)
-  learnrTrackR::export_results(con, scores_path, type = "scores", tutorial_id = tutorial_id)
-  learnrTrackR::export_results(con, gradebook_path, type = "gradebook", tutorial_id = tutorial_id)
-  learnrTrackR::export_moodle_grades(
-    con,
-    moodle_path,
-    tutorial_id = tutorial_id,
-    grade_item = "Descriptive statistics pilot",
-    group_id = group_filter
-  )
-  bundle_paths <- learnrTrackR::export_tracking_bundle(
-    con,
-    bundle_dir,
-    tutorial_id = tutorial_id,
-    group_id = group_filter
-  )
+  message("Wrote attempts to: ", outputs$paths$attempts)
+  message("Wrote scores to: ", outputs$paths$scores)
+  message("Wrote gradebook to: ", outputs$paths$gradebook)
+  message("Wrote Moodle-ready grades to: ", outputs$paths$moodle)
+  message("Wrote rich export bundle to: ", outputs$paths$bundle)
+  message("Wrote teacher report to: ", outputs$paths$report)
+  print(outputs$bundle_paths)
 
-  if (requireNamespace("rmarkdown", quietly = TRUE)) {
-    learnrTrackR::generate_teacher_report(
-      con,
-      report_path,
-      tutorial_id = tutorial_id,
-      group_id = group_filter,
-      rule = "last"
-    )
-  } else {
-    report_path <- NA_character_
-  }
-
-  print(attempts)
-  print(scores)
-  print(grades)
-  print(dashboard$summary)
-  print(report$summary)
-
-  message("Wrote attempts to: ", attempts_path)
-  message("Wrote scores to: ", scores_path)
-  message("Wrote gradebook to: ", gradebook_path)
-  message("Wrote Moodle-ready grades to: ", moodle_path)
-  message("Wrote rich export bundle to: ", bundle_dir)
-  message("Wrote teacher report to: ", report_path)
-  print(bundle_paths)
-
-  invisible(
-    list(
-      attempts = attempts,
-      scores = scores,
-      gradebook = grades,
-      dashboard = dashboard,
-      report = report,
-      paths = list(
-        attempts = attempts_path,
-        scores = scores_path,
-        gradebook = gradebook_path,
-        moodle = moodle_path,
-        bundle = bundle_dir,
-        report = report_path
-      )
-    )
-  )
+  outputs
 }
 
 run_course_pilot_inspection()

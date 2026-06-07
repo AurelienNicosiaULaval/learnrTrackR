@@ -18,6 +18,7 @@ The data are simulated and do not represent real students.
 course-pilot/
   tutorial.Rmd
   pilot-data.R
+  pilot-workflow.R
   simulate-results.R
   inspect-results.R
   tracking-strategy.md

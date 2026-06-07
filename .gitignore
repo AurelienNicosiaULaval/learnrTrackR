@@ -6,3 +6,4 @@ doc/
 docs/
 Meta/
 inst/examples/postgres-docker/.env
+inst/examples/postgres-docker/pilot-outputs/

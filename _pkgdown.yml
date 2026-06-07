@@ -16,6 +16,7 @@ articles:
   - teacher-workflow
   - moodle-export
   - deployment-postgresql
+  - pilot-deployment
 reference:
 - title: Database backends
   contents:

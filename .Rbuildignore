@@ -11,6 +11,7 @@
 ^doc$
 ^Meta$
 ^inst/examples/postgres-docker/\.env$
+^inst/examples/postgres-docker/pilot-outputs/
 ^privacy\.md$
 ^release-checklist\.md$
 ^\.github$
