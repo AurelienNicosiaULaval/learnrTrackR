@@ -12,6 +12,10 @@
 ^Meta$
 ^inst/examples/postgres-docker/\.env$
 ^inst/examples/postgres-docker/pilot-outputs/
+^inst/examples/course-pilot/student\.env$
+^inst/examples/course-pilot/teacher\.env$
+^inst/examples/course-pilot/course-pilot\.sqlite$
+^inst/examples/course-pilot/course-pilot-outputs/
 ^privacy\.md$
 ^release-checklist\.md$
 ^\.github$

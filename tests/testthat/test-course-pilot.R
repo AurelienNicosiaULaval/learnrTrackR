@@ -16,10 +16,60 @@ test_that("course pilot configuration is coherent", {
 
   expect_equal(config$courses$course_id, "stat_intro")
   expect_equal(config$tutorials$tutorial_id, "stat_descriptive_pilot")
+  expect_equal(config$tutorials$version, "0.2.0")
   expect_equal(nrow(config$students), 4)
   expect_equal(nrow(config$questions), 6)
   expect_equal(sum(config$questions$max_score), 7)
   expect_true(all(config$questions$tutorial_id == "stat_descriptive_pilot"))
+})
+
+test_that("course pilot includes launch scripts and checklist", {
+  example_dir <- course_pilot_example_dir()
+  expected_files <- file.path(
+    example_dir,
+    c(
+      "run-student.R",
+      "run-teacher.R",
+      "student.env.example",
+      "teacher.env.example",
+      "pilot-checklist.md",
+      "config/tracking.yml"
+    )
+  )
+
+  expect_true(all(file.exists(expected_files)))
+  expect_silent(parse(file = file.path(example_dir, "run-student.R")))
+  expect_silent(parse(file = file.path(example_dir, "run-teacher.R")))
+
+  student_launcher <- readLines(file.path(example_dir, "run-student.R"), warn = FALSE)
+  teacher_launcher <- readLines(file.path(example_dir, "run-teacher.R"), warn = FALSE)
+  checklist <- readLines(file.path(example_dir, "pilot-checklist.md"), warn = FALSE)
+
+  expect_true(any(grepl("learnr::run_tutorial", student_launcher, fixed = TRUE)))
+  expect_true(any(grepl("inspect-results.R", teacher_launcher, fixed = TRUE)))
+  expect_true(any(grepl("LEARNRTRACKR_TEACHER_OPEN_DASHBOARD", teacher_launcher, fixed = TRUE)))
+  expect_true(any(grepl("Moodle import", checklist, fixed = TRUE)))
+  expect_true(any(grepl("Privacy", checklist, fixed = TRUE)))
+})
+
+test_that("course pilot YAML configuration matches the CSV configuration", {
+  skip_if_not_installed("yaml")
+
+  example_dir <- course_pilot_example_dir()
+  csv_config <- read_tracking_config(file.path(example_dir, "config-csv"))
+  yaml_config <- read_tracking_config(file.path(example_dir, "config", "tracking.yml"))
+  normalize_empty_email <- function(data) {
+    if ("email" %in% names(data)) {
+      data$email[is.na(data$email)] <- ""
+    }
+
+    data
+  }
+
+  expect_equal(yaml_config$courses, csv_config$courses)
+  expect_equal(yaml_config$tutorials, csv_config$tutorials)
+  expect_equal(normalize_empty_email(yaml_config$students), normalize_empty_email(csv_config$students))
+  expect_equal(yaml_config$questions, csv_config$questions)
 })
 
 test_that("course pilot data support the tutorial answers", {

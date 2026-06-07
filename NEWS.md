@@ -1,4 +1,4 @@
-# learnrTrackR 0.1.1.9000
+# learnrTrackR 0.2.0
 
 - Added a course pilot example showing a realistic tracked `learnr` tutorial,
   CSV configuration, simulated learner results, Moodle export, and teacher
@@ -7,6 +7,11 @@
 - Added a controlled PostgreSQL pilot deployment smoke test and vignette.
 - Added PostgreSQL-aware teacher dashboard launchers for open DBI connections
   and environment-variable based PostgreSQL settings.
+- Added explicit course pilot student and teacher launch scripts.
+- Added a course pilot single-file YAML configuration alongside the CSV
+  configuration.
+- Added a course pilot preflight checklist covering configuration, privacy,
+  launch, exports, Moodle import, and dashboard access.
 
 # learnrTrackR 0.1.1
 

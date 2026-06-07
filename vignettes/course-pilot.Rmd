@@ -18,8 +18,9 @@ knitr::opts_chunk$set(
 
 This vignette introduces the course pilot example included with
 `learnrTrackR`. The pilot is a simulated descriptive statistics tutorial with
-tracked `learnr` questions, tracked `gradethis` code exercises, CSV
-configuration files, and teacher outputs.
+tracked `learnr` questions, tracked `gradethis` code exercises, CSV and YAML
+configuration files, explicit student and teacher launch scripts, and teacher
+outputs.
 
 The data are simulated. They are intended only for testing the tracking
 workflow.
@@ -43,12 +44,31 @@ list.files(example_dir)
 
 ```{r read-config}
 config_dir <- file.path(example_dir, "config-csv")
+yaml_config <- file.path(example_dir, "config", "tracking.yml")
 config <- read_tracking_config(config_dir)
+yaml_config_data <- read_tracking_config(yaml_config)
 
 config$courses
 config$tutorials
 config$students
 config$questions
+yaml_config_data$tutorials
+```
+
+# Launch with scripts
+
+For a student-style launch from the example directory:
+
+```{sh run-student, eval = FALSE}
+cp student.env.example student.env
+Rscript run-student.R
+```
+
+For teacher outputs:
+
+```{sh run-teacher, eval = FALSE}
+cp teacher.env.example teacher.env
+Rscript run-teacher.R
 ```
 
 # Launch the tutorial locally
@@ -102,3 +122,8 @@ run_dashboard(Sys.getenv("LEARNRTRACKR_DB"), group_id = "A")
 
 The dashboard is a local inspection interface for prototypes. It does not
 replace institutional authentication.
+
+# Preflight checklist
+
+The example includes `pilot-checklist.md`. Read it before using the workflow
+with real learners.

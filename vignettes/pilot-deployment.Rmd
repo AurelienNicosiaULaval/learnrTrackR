@@ -25,6 +25,10 @@ The workflow is intended for development, local rehearsal, and small controlled
 pilots. It is not an institutional authentication layer and it is not a
 production LMS.
 
+For the SQLite version of the same pilot, the `course-pilot` example includes
+`run-student.R`, `run-teacher.R`, `student.env.example`,
+`teacher.env.example`, and `pilot-checklist.md`.
+
 # Example directories
 
 ```{r locate}
@@ -154,16 +158,17 @@ run_dashboard_postgres(
 
 Before a real controlled pilot:
 
-1. choose the student identifier used for Moodle matching;
-2. prepare `students.csv` with only necessary student metadata;
-3. set a PostgreSQL password that is not committed to Git;
-4. use a dedicated PostgreSQL database or schema;
-5. run `course-pilot-smoke-test.R`;
-6. inspect `course-pilot-moodle.csv` before importing;
-7. inspect the teacher report before using results for teaching decisions;
-8. launch `run-dashboard.R` only from an explicitly managed local or protected
+1. read `pilot-checklist.md` in the `course-pilot` example;
+2. choose the student identifier used for Moodle matching;
+3. prepare `students.csv` with only necessary student metadata;
+4. set a PostgreSQL password that is not committed to Git;
+5. use a dedicated PostgreSQL database or schema;
+6. run `course-pilot-smoke-test.R`;
+7. inspect `course-pilot-moodle.csv` before importing;
+8. inspect the teacher report before using results for teaching decisions;
+9. launch `run-dashboard.R` only from an explicitly managed local or protected
    environment;
-9. document who can access exports and how long files are retained.
+10. document who can access exports and how long files are retained.
 
 # Stop PostgreSQL
 

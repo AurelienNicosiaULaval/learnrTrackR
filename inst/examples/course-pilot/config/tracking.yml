@@ -1,0 +1,57 @@
+courses:
+  - course_id: stat_intro
+    course_label: Introduction to statistics with R
+    semester: pilot
+tutorials:
+  - tutorial_id: stat_descriptive_pilot
+    course_id: stat_intro
+    tutorial_label: Descriptive statistics pilot tutorial
+    version: 0.2.0
+students:
+  - student_id: student_demo
+    student_label: Demo learner
+    email: ""
+    group_id: A
+  - student_id: student_a01
+    student_label: Student A01
+    email: ""
+    group_id: A
+  - student_id: student_a02
+    student_label: Student A02
+    email: ""
+    group_id: A
+  - student_id: student_b01
+    student_label: Student B01
+    email: ""
+    group_id: B
+questions:
+  - tutorial_id: stat_descriptive_pilot
+    question_id: q1_variable_type
+    question_label: Identify a quantitative variable
+    question_type: radio
+    max_score: 1
+  - tutorial_id: stat_descriptive_pilot
+    question_id: q2_robust_summaries
+    question_label: Choose robust summary statistics
+    question_type: checkbox
+    max_score: 1
+  - tutorial_id: stat_descriptive_pilot
+    question_id: q3_n_rows
+    question_label: Count data rows
+    question_type: numeric
+    max_score: 1
+  - tutorial_id: stat_descriptive_pilot
+    question_id: q4_highest_median
+    question_label: Identify the highest median region
+    question_type: text
+    max_score: 1
+  - tutorial_id: stat_descriptive_pilot
+    question_id: q5_mean_study_hours
+    question_label: Compute mean study hours
+    question_type: code
+    max_score: 1
+  - tutorial_id: stat_descriptive_pilot
+    question_id: q6_region_summary
+    question_label: Summarise study hours by region
+    question_type: code
+    max_score: 2

@@ -248,7 +248,16 @@ configuration directory.
 A course-like pilot is available in `inst/examples/course-pilot/`. It contains
 a simulated descriptive statistics tutorial with tracked `learnr` questions,
 tracked `gradethis` code exercises, CSV configuration files, a cohort
-simulation script, Moodle export, and teacher report generation.
+simulation script, explicit student and teacher launch scripts, Moodle export,
+dashboard launch, a preflight checklist, and teacher report generation.
+
+The pilot includes both a CSV configuration directory and a single-file YAML
+configuration:
+
+```text
+inst/examples/course-pilot/config-csv/
+inst/examples/course-pilot/config/tracking.yml
+```
 
 To create simulated pilot results:
 
@@ -257,7 +266,24 @@ source("inst/examples/course-pilot/simulate-results.R")
 source("inst/examples/course-pilot/inspect-results.R")
 ```
 
-The tutorial can also be launched manually:
+For a student-style launch, copy the example environment file and run the
+student launcher:
+
+```sh
+cd inst/examples/course-pilot
+cp student.env.example student.env
+Rscript run-student.R
+```
+
+The teacher output workflow can be launched separately:
+
+```sh
+cd inst/examples/course-pilot
+cp teacher.env.example teacher.env
+Rscript run-teacher.R
+```
+
+The tutorial can also be launched manually from R:
 
 ```r
 Sys.setenv(
@@ -272,6 +298,9 @@ learnr::run_tutorial(
   as_rstudio_job = FALSE
 )
 ```
+
+Before a real controlled pilot, read
+`inst/examples/course-pilot/pilot-checklist.md`.
 
 ## PostgreSQL prototype
 
@@ -349,14 +378,16 @@ generate_teacher_report(con, "teacher-report.html", "module_01")
 These helpers use the same scoring rules as `gradebook()` and can be filtered
 by registered group.
 
-## Short roadmap
+## Short roadmap after 0.2.0
 
-1. Validate the SQLite storage layer with simulated attempts.
-2. Expand the minimal `learnr` tutorial integration prototype.
-3. Add stronger student identification workflows.
-4. Add richer gradebook and Moodle-oriented exports.
-5. Add safer deployment and access-control options for the instructor
-   dashboard.
+1. Rehearse the course pilot with one real tutorial section and a small number
+   of volunteer learners.
+2. Decide the institutional student identifier, authentication boundary, and
+   data-retention period outside the package.
+3. Add a deployment guide for a managed Shiny or Posit Connect environment.
+4. Add stricter operational checks for duplicate learners, missing questions,
+   and unexpected Moodle export rows.
+5. Prepare a `0.3.0` release focused on production deployment hardening.
 
 ## Minimal learnr prototype
 
