@@ -176,6 +176,23 @@ gradebook rows, and export files:
 run_dashboard(db_path)
 ```
 
+For an open DBI connection, including PostgreSQL, use:
+
+```r
+run_dashboard_connection(con, group_id = "A")
+```
+
+The PostgreSQL launcher can also read the Docker example environment
+variables:
+
+```r
+run_dashboard_postgres(
+  postgres_schema = "learnrtrackr_pilot",
+  tutorial_id = "stat_descriptive_pilot",
+  group_id = "A"
+)
+```
+
 Registered student groups can be selected in the dashboard. The same filter is
 applied to the displayed students, attempts, gradebook rows, and downloaded CSV
 files.
@@ -274,9 +291,11 @@ con <- connect_postgres_tracking_db(
 load_tracking_config(con, "config")
 ```
 
-The PostgreSQL path is intended for controlled deployments. The current Shiny
-launcher still accepts a SQLite database path; use `dashboard_data(con, ...)`
-directly when working with an open PostgreSQL connection.
+The PostgreSQL path is intended for controlled deployments. Use
+`dashboard_data(con, ...)` for non-interactive inspection,
+`run_dashboard_connection(con, ...)` for an open DBI connection, or
+`run_dashboard_postgres(...)` for environment-variable based PostgreSQL
+launches.
 
 For a reproducible local PostgreSQL rehearsal, see:
 
@@ -294,6 +313,7 @@ cd inst/examples/postgres-docker
 cp env.example .env
 docker compose --env-file .env up -d
 Rscript course-pilot-smoke-test.R
+Rscript run-dashboard.R
 ```
 
 The pilot smoke test loads the `course-pilot` CSV configuration, records the

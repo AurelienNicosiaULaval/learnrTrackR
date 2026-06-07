@@ -121,12 +121,32 @@ Rscript -e 'devtools::test(filter = "db")'
 
 Use a disposable test database. The test creates and drops a temporary schema.
 
-# Dashboard status
+# Dashboard
 
 The exported data preparation function `dashboard_data(con, ...)` works with an
-open DBI connection. The interactive launcher `run_dashboard()` still expects a
-SQLite database path. A future deployment step should add a PostgreSQL-aware
-dashboard launcher.
+open DBI connection. The interactive dashboard can also use an open DBI
+connection:
+
+```{r dashboard-connection, eval = FALSE}
+run_dashboard_connection(
+  con,
+  tutorial_id = "module_01",
+  group_id = "A",
+  access_token = Sys.getenv("LEARNRTRACKR_DASHBOARD_TOKEN")
+)
+```
+
+For a PostgreSQL launch based on `LEARNRTRACKR_POSTGRES_*` environment
+variables, use:
+
+```{r dashboard-postgres, eval = FALSE}
+run_dashboard_postgres(
+  postgres_schema = Sys.getenv("LEARNRTRACKR_POSTGRES_SCHEMA"),
+  tutorial_id = "module_01",
+  group_id = "A",
+  access_token = Sys.getenv("LEARNRTRACKR_DASHBOARD_TOKEN")
+)
+```
 
 # Minimum operational safeguards
 

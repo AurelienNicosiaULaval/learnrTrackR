@@ -109,6 +109,21 @@ test_that("dashboard_app builds a Shiny app object", {
   expect_s3_class(app, "shiny.appobj")
 })
 
+test_that("dashboard_connection_app builds a Shiny app object", {
+  skip_if_not_installed("shiny")
+
+  db_path <- withr::local_tempfile(fileext = ".sqlite")
+  con <- init_tracking_db(db_path, overwrite = TRUE)
+  withr::defer(DBI::dbDisconnect(con))
+
+  register_questions(con, "module_01", c("q1"))
+  register_students(con, data.frame(student_id = "student_001", group_id = "A"))
+
+  app <- dashboard_connection_app(con, tutorial_id = "module_01", group_id = "A")
+
+  expect_s3_class(app, "shiny.appobj")
+})
+
 test_that("dashboard_app builds a token-gated Shiny app object", {
   skip_if_not_installed("shiny")
 
@@ -141,6 +156,92 @@ test_that("dashboard access token can be explicit or environment based", {
   expect_null(
     resolve_dashboard_access_token(token_envvar = NULL)
   )
+})
+
+test_that("PostgreSQL dashboard schema names are normalized", {
+  expect_null(normalize_postgres_schema_name(NULL))
+  expect_null(normalize_postgres_schema_name(""))
+  expect_null(normalize_postgres_schema_name("   "))
+  expect_equal(
+    normalize_postgres_schema_name("learnrtrackr_pilot_01"),
+    "learnrtrackr_pilot_01"
+  )
+  expect_error(
+    normalize_postgres_schema_name("learnrtrackr-pilot"),
+    "postgres_schema"
+  )
+  expect_error(
+    normalize_postgres_schema_name("01_learnrtrackr_pilot"),
+    "postgres_schema"
+  )
+})
+
+test_that("dashboard source works with PostgreSQL when a test DSN is configured", {
+  skip_if_not_installed("RPostgres")
+
+  dsn <- Sys.getenv("LEARNRTRACKR_TEST_POSTGRES_DSN", unset = "")
+  skip_if(
+    !nzchar(dsn),
+    "Set LEARNRTRACKR_TEST_POSTGRES_DSN to run PostgreSQL dashboard integration tests."
+  )
+
+  schema_name <- paste0(
+    "learnrtrackr_dashboard_test_",
+    gsub("[^A-Za-z0-9]", "", basename(tempfile()))
+  )
+
+  con <- DBI::dbConnect(RPostgres::Postgres(), dbname = dsn)
+  withr::defer(DBI::dbDisconnect(con))
+  withr::defer(
+    DBI::dbExecute(
+      con,
+      paste(
+        "DROP SCHEMA IF EXISTS",
+        DBI::dbQuoteIdentifier(con, schema_name),
+        "CASCADE"
+      )
+    )
+  )
+
+  expect_equal(
+    set_postgres_dashboard_schema(
+      con,
+      postgres_schema = schema_name,
+      initialize = TRUE
+    ),
+    schema_name
+  )
+  create_schema(con)
+  register_students(
+    con,
+    data.frame(
+      student_id = c("student_001", "student_002"),
+      group_id = c("A", "B")
+    )
+  )
+  register_questions(con, "module_01", c("q1"))
+  track_attempt(
+    con,
+    "student_001",
+    "module_01",
+    "q1",
+    "mean(x)",
+    score = 1,
+    max_score = 1,
+    require_registered_student = TRUE
+  )
+
+  data_source <- dashboard_connection_source(con)
+  data <- data_source(tutorial_id = "module_01", group_id = "A")
+
+  expect_equal(data$group_id, "A")
+  expect_equal(data$attempts$student_id, "student_001")
+  expect_equal(data$students$student_id, "student_001")
+
+  if (requireNamespace("shiny", quietly = TRUE)) {
+    app <- dashboard_connection_app(con, tutorial_id = "module_01", group_id = "A")
+    expect_s3_class(app, "shiny.appobj")
+  }
 })
 
 test_that("dashboard launch security refuses unprotected remote hosts", {

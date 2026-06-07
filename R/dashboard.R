@@ -579,6 +579,58 @@ dashboard_data_from_path <- function(db_path,
   )
 }
 
+dashboard_data_from_connection <- function(con,
+                                           tutorial_id = NULL,
+                                           rule = "last",
+                                           include_unregistered = TRUE,
+                                           group_id = NULL) {
+  dashboard_data(
+    con = con,
+    tutorial_id = tutorial_id,
+    rule = rule,
+    include_unregistered = include_unregistered,
+    group_id = group_id
+  )
+}
+
+dashboard_sqlite_source <- function(db_path) {
+  db_path <- validate_path(db_path, arg = "db_path")
+
+  if (!file.exists(db_path)) {
+    cli::cli_abort("The database file does not exist: {.path {db_path}}.")
+  }
+
+  function(tutorial_id = NULL,
+           rule = "last",
+           include_unregistered = TRUE,
+           group_id = NULL) {
+    dashboard_data_from_path(
+      db_path = db_path,
+      tutorial_id = tutorial_id,
+      rule = rule,
+      include_unregistered = include_unregistered,
+      group_id = group_id
+    )
+  }
+}
+
+dashboard_connection_source <- function(con) {
+  check_required_tables(con)
+
+  function(tutorial_id = NULL,
+           rule = "last",
+           include_unregistered = TRUE,
+           group_id = NULL) {
+    dashboard_data_from_connection(
+      con = con,
+      tutorial_id = tutorial_id,
+      rule = rule,
+      include_unregistered = include_unregistered,
+      group_id = group_id
+    )
+  }
+}
+
 resolve_dashboard_access_token <- function(access_token = NULL,
                                            token_envvar = "LEARNRTRACKR_DASHBOARD_TOKEN") {
   access_token <- validate_scalar_character(
@@ -690,20 +742,19 @@ dashboard_main_ui <- function(choices,
   )
 }
 
-dashboard_app <- function(db_path,
-                          tutorial_id = NULL,
-                          rule = "last",
-                          include_unregistered = TRUE,
-                          group_id = NULL,
-                          access_token = NULL) {
+dashboard_source_app <- function(data_source,
+                                 tutorial_id = NULL,
+                                 rule = "last",
+                                 include_unregistered = TRUE,
+                                 group_id = NULL,
+                                 access_token = NULL) {
   if (!requireNamespace("shiny", quietly = TRUE)) {
     cli::cli_abort(
       "Package {.pkg shiny} is required to use {.fn run_dashboard}."
     )
   }
 
-  initial_data <- dashboard_data_from_path(
-    db_path = db_path,
+  initial_data <- data_source(
     tutorial_id = tutorial_id,
     rule = rule,
     include_unregistered = include_unregistered,
@@ -779,8 +830,7 @@ dashboard_app <- function(db_path,
       shiny::req(authorized())
       input$refresh
 
-      dashboard_data_from_path(
-        db_path = db_path,
+      data_source(
         tutorial_id = input$tutorial_id,
         rule = input$rule,
         include_unregistered = input$include_unregistered,
@@ -822,6 +872,151 @@ dashboard_app <- function(db_path,
   }
 
   shiny::shinyApp(ui = ui, server = server)
+}
+
+dashboard_app <- function(db_path,
+                          tutorial_id = NULL,
+                          rule = "last",
+                          include_unregistered = TRUE,
+                          group_id = NULL,
+                          access_token = NULL) {
+  dashboard_source_app(
+    data_source = dashboard_sqlite_source(db_path),
+    tutorial_id = tutorial_id,
+    rule = rule,
+    include_unregistered = include_unregistered,
+    group_id = group_id,
+    access_token = access_token
+  )
+}
+
+dashboard_connection_app <- function(con,
+                                     tutorial_id = NULL,
+                                     rule = "last",
+                                     include_unregistered = TRUE,
+                                     group_id = NULL,
+                                     access_token = NULL) {
+  dashboard_source_app(
+    data_source = dashboard_connection_source(con),
+    tutorial_id = tutorial_id,
+    rule = rule,
+    include_unregistered = include_unregistered,
+    group_id = group_id,
+    access_token = access_token
+  )
+}
+
+normalize_postgres_schema_name <- function(schema = NULL) {
+  schema <- validate_scalar_character(
+    schema,
+    arg = "postgres_schema",
+    allow_null = TRUE,
+    allow_empty = TRUE
+  )
+
+  if (is.null(schema)) {
+    return(NULL)
+  }
+
+  schema <- trimws(schema)
+
+  if (!nzchar(schema)) {
+    return(NULL)
+  }
+
+  if (!grepl("^[A-Za-z_][A-Za-z0-9_]*$", schema)) {
+    cli::cli_abort(
+      "{.arg postgres_schema} must start with a letter or underscore and contain only letters, digits, or underscores."
+    )
+  }
+
+  schema
+}
+
+set_postgres_dashboard_schema <- function(con,
+                                          postgres_schema = NULL,
+                                          initialize = FALSE) {
+  postgres_schema <- normalize_postgres_schema_name(postgres_schema)
+
+  if (is.null(postgres_schema)) {
+    return(invisible(NULL))
+  }
+
+  quoted_schema <- DBI::dbQuoteIdentifier(con, postgres_schema)
+
+  if (initialize) {
+    DBI::dbExecute(con, paste("CREATE SCHEMA IF NOT EXISTS", quoted_schema))
+  }
+
+  DBI::dbExecute(con, paste("SET search_path TO", quoted_schema))
+
+  invisible(postgres_schema)
+}
+
+connect_dashboard_postgres_db <- function(dbname,
+                                          postgres_host,
+                                          postgres_port,
+                                          postgres_user,
+                                          postgres_password = NULL,
+                                          postgres_schema = NULL,
+                                          initialize = FALSE) {
+  if (!requireNamespace("RPostgres", quietly = TRUE)) {
+    cli::cli_abort(
+      "Package {.pkg RPostgres} is required to connect to PostgreSQL."
+    )
+  }
+
+  dbname <- validate_scalar_character(dbname, arg = "dbname")
+  postgres_host <- validate_scalar_character(postgres_host, arg = "postgres_host")
+  postgres_port <- validate_positive_integer(postgres_port, arg = "postgres_port")
+  postgres_user <- validate_scalar_character(postgres_user, arg = "postgres_user")
+  postgres_password <- validate_scalar_character(
+    postgres_password,
+    arg = "postgres_password",
+    allow_null = TRUE,
+    allow_empty = TRUE
+  )
+  initialize <- validate_scalar_logical(initialize, arg = "initialize")
+
+  connection_args <- list(
+    dbname = dbname,
+    host = postgres_host,
+    port = postgres_port,
+    user = postgres_user
+  )
+
+  if (!is.null(postgres_password) && nzchar(postgres_password)) {
+    connection_args$password <- postgres_password
+  }
+
+  con <- do.call(
+    DBI::dbConnect,
+    c(list(drv = RPostgres::Postgres()), connection_args)
+  )
+
+  tryCatch(
+    {
+      set_postgres_dashboard_schema(
+        con,
+        postgres_schema = postgres_schema,
+        initialize = initialize
+      )
+
+      if (initialize) {
+        create_schema(con)
+      }
+
+      check_required_tables(con)
+      con
+    },
+    error = function(cnd) {
+      if (DBI::dbIsValid(con)) {
+        DBI::dbDisconnect(con)
+      }
+
+      stop(cnd)
+    }
+  )
 }
 
 #' Run the teacher dashboard
@@ -909,4 +1104,170 @@ run_dashboard <- function(db_path,
   )
 
   shiny::runApp(app, host = host, ...)
+}
+
+#' Run the teacher dashboard from an open DBI connection
+#'
+#' Opens the same Shiny dashboard as [run_dashboard()], but reads data from an
+#' existing DBI connection instead of a SQLite file path. The caller owns the
+#' connection and is responsible for disconnecting it after the dashboard stops.
+#'
+#' @inheritParams dashboard_data
+#' @inheritParams run_dashboard
+#'
+#' @return The return value of [shiny::runApp()].
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' db_path <- "learnrtrackr.sqlite"
+#' con <- connect_tracking_db(db_path)
+#' run_dashboard_connection(con)
+#' DBI::dbDisconnect(con)
+#' }
+run_dashboard_connection <- function(con,
+                                     tutorial_id = NULL,
+                                     rule = c("last", "best", "first"),
+                                     include_unregistered = TRUE,
+                                     group_id = NULL,
+                                     host = "127.0.0.1",
+                                     access_token = NULL,
+                                     token_envvar = "LEARNRTRACKR_DASHBOARD_TOKEN",
+                                     allow_remote = FALSE,
+                                     ...) {
+  if (!requireNamespace("shiny", quietly = TRUE)) {
+    cli::cli_abort(
+      "Package {.pkg shiny} is required to use {.fn run_dashboard_connection}."
+    )
+  }
+
+  check_required_tables(con)
+  rule <- match.arg(rule)
+  include_unregistered <- validate_scalar_logical(
+    include_unregistered,
+    arg = "include_unregistered"
+  )
+  group_id <- normalize_dashboard_group_id(group_id)
+  host <- validate_dashboard_host(host)
+  access_token <- resolve_dashboard_access_token(
+    access_token = access_token,
+    token_envvar = token_envvar
+  )
+  allow_remote <- validate_scalar_logical(
+    allow_remote,
+    arg = "allow_remote"
+  )
+
+  check_dashboard_launch_security(
+    host = host,
+    access_token = access_token,
+    allow_remote = allow_remote
+  )
+
+  app <- dashboard_connection_app(
+    con = con,
+    tutorial_id = tutorial_id,
+    rule = rule,
+    include_unregistered = include_unregistered,
+    group_id = group_id,
+    access_token = access_token
+  )
+
+  shiny::runApp(app, host = host, ...)
+}
+
+#' Run the teacher dashboard from PostgreSQL
+#'
+#' Connects to a PostgreSQL tracking database and opens the teacher dashboard.
+#' Connection settings default to `LEARNRTRACKR_POSTGRES_*` environment
+#' variables. If `postgres_schema` is supplied, the PostgreSQL `search_path` is
+#' set to that schema before dashboard data are read.
+#'
+#' @param dbname PostgreSQL database name. Defaults to
+#'   `LEARNRTRACKR_POSTGRES_DB`, or `"learnrtrackr"` when unset.
+#' @param postgres_host PostgreSQL host. Defaults to
+#'   `LEARNRTRACKR_POSTGRES_HOST`, or `"127.0.0.1"` when unset.
+#' @param postgres_port PostgreSQL port. Defaults to
+#'   `LEARNRTRACKR_POSTGRES_PORT`, or `5432` when unset.
+#' @param postgres_user PostgreSQL user. Defaults to
+#'   `LEARNRTRACKR_POSTGRES_USER`, or `"learnrtrackr"` when unset.
+#' @param postgres_password Optional PostgreSQL password. Defaults to
+#'   `LEARNRTRACKR_POSTGRES_PASSWORD`.
+#' @param postgres_schema Optional PostgreSQL schema. Defaults to
+#'   `LEARNRTRACKR_POSTGRES_SCHEMA`.
+#' @param initialize If `TRUE`, create `postgres_schema` when supplied and
+#'   create missing tracking tables before launching the dashboard.
+#' @inheritParams run_dashboard
+#'
+#' @return The return value of [shiny::runApp()].
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' run_dashboard_postgres(
+#'   postgres_schema = "learnrtrackr_pilot",
+#'   group_id = "A",
+#'   access_token = Sys.getenv("LEARNRTRACKR_DASHBOARD_TOKEN")
+#' )
+#' }
+run_dashboard_postgres <- function(dbname = Sys.getenv(
+                                     "LEARNRTRACKR_POSTGRES_DB",
+                                     unset = "learnrtrackr"
+                                   ),
+                                   postgres_host = Sys.getenv(
+                                     "LEARNRTRACKR_POSTGRES_HOST",
+                                     unset = "127.0.0.1"
+                                   ),
+                                   postgres_port = as.integer(Sys.getenv(
+                                     "LEARNRTRACKR_POSTGRES_PORT",
+                                     unset = "5432"
+                                   )),
+                                   postgres_user = Sys.getenv(
+                                     "LEARNRTRACKR_POSTGRES_USER",
+                                     unset = "learnrtrackr"
+                                   ),
+                                   postgres_password = Sys.getenv(
+                                     "LEARNRTRACKR_POSTGRES_PASSWORD",
+                                     unset = ""
+                                   ),
+                                   postgres_schema = Sys.getenv(
+                                     "LEARNRTRACKR_POSTGRES_SCHEMA",
+                                     unset = ""
+                                   ),
+                                   initialize = FALSE,
+                                   tutorial_id = NULL,
+                                   rule = c("last", "best", "first"),
+                                   include_unregistered = TRUE,
+                                   group_id = Sys.getenv(
+                                     "LEARNRTRACKR_PILOT_GROUP_ID",
+                                     unset = ""
+                                   ),
+                                   host = "127.0.0.1",
+                                   access_token = NULL,
+                                   token_envvar = "LEARNRTRACKR_DASHBOARD_TOKEN",
+                                   allow_remote = FALSE,
+                                   ...) {
+  con <- connect_dashboard_postgres_db(
+    dbname = dbname,
+    postgres_host = postgres_host,
+    postgres_port = postgres_port,
+    postgres_user = postgres_user,
+    postgres_password = postgres_password,
+    postgres_schema = postgres_schema,
+    initialize = initialize
+  )
+  on.exit(DBI::dbDisconnect(con), add = TRUE)
+
+  run_dashboard_connection(
+    con = con,
+    tutorial_id = tutorial_id,
+    rule = rule,
+    include_unregistered = include_unregistered,
+    group_id = group_id,
+    host = host,
+    access_token = access_token,
+    token_envvar = token_envvar,
+    allow_remote = allow_remote,
+    ...
+  )
 }

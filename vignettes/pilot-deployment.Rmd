@@ -55,9 +55,11 @@ LEARNRTRACKR_POSTGRES_PASSWORD=replace-with-a-long-random-password
 LEARNRTRACKR_POSTGRES_HOST=127.0.0.1
 LEARNRTRACKR_POSTGRES_PORT=5432
 LEARNRTRACKR_POSTGRES_SCHEMA=learnrtrackr_pilot
+LEARNRTRACKR_PILOT_TUTORIAL_ID=stat_descriptive_pilot
 LEARNRTRACKR_PILOT_GROUP_ID=A
 LEARNRTRACKR_PILOT_OUTPUT_DIR=pilot-outputs
 LEARNRTRACKR_PILOT_RESET=true
+LEARNRTRACKR_DASHBOARD_HOST=127.0.0.1
 LEARNRTRACKR_DASHBOARD_TOKEN=replace-with-a-long-random-dashboard-token
 ```
 
@@ -115,7 +117,7 @@ course-pilot-bundle/
 The Moodle CSV is filtered by `LEARNRTRACKR_PILOT_GROUP_ID`. For example,
 `LEARNRTRACKR_PILOT_GROUP_ID=A` exports only the configured group A learners.
 
-# Dashboard status
+# Dashboard
 
 The pilot verifies dashboard tables with:
 
@@ -128,9 +130,25 @@ dashboard_data(
 )
 ```
 
-The current interactive launcher `run_dashboard()` still expects a SQLite
-database path. A PostgreSQL-aware dashboard launcher is a separate future
-development step.
+The interactive dashboard can then be launched from the same PostgreSQL
+environment:
+
+```{sh run-dashboard-script, eval = FALSE}
+Rscript run-dashboard.R
+```
+
+The script calls `run_dashboard_postgres()` with the configured PostgreSQL
+schema, tutorial id, group filter, dashboard host, and dashboard token:
+
+```{r run-dashboard-postgres, eval = FALSE}
+run_dashboard_postgres(
+  postgres_schema = Sys.getenv("LEARNRTRACKR_POSTGRES_SCHEMA"),
+  tutorial_id = Sys.getenv("LEARNRTRACKR_PILOT_TUTORIAL_ID"),
+  group_id = Sys.getenv("LEARNRTRACKR_PILOT_GROUP_ID"),
+  host = Sys.getenv("LEARNRTRACKR_DASHBOARD_HOST", unset = "127.0.0.1"),
+  access_token = Sys.getenv("LEARNRTRACKR_DASHBOARD_TOKEN")
+)
+```
 
 # Teacher launch checklist
 
@@ -143,7 +161,9 @@ Before a real controlled pilot:
 5. run `course-pilot-smoke-test.R`;
 6. inspect `course-pilot-moodle.csv` before importing;
 7. inspect the teacher report before using results for teaching decisions;
-8. document who can access exports and how long files are retained.
+8. launch `run-dashboard.R` only from an explicitly managed local or protected
+   environment;
+9. document who can access exports and how long files are retained.
 
 # Stop PostgreSQL
 

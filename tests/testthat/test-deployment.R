@@ -9,11 +9,13 @@ test_that("PostgreSQL Docker example files are installed", {
   env_path <- file.path(example_dir, "env.example")
   smoke_path <- file.path(example_dir, "smoke-test.R")
   pilot_smoke_path <- file.path(example_dir, "course-pilot-smoke-test.R")
+  run_dashboard_path <- file.path(example_dir, "run-dashboard.R")
 
   expect_true(file.exists(compose_path))
   expect_true(file.exists(env_path))
   expect_true(file.exists(smoke_path))
   expect_true(file.exists(pilot_smoke_path))
+  expect_true(file.exists(run_dashboard_path))
 
   compose <- readLines(compose_path, warn = FALSE)
   env <- readLines(env_path, warn = FALSE)
@@ -22,8 +24,10 @@ test_that("PostgreSQL Docker example files are installed", {
   expect_false(any(grepl("POSTGRES_HOST_AUTH_METHOD", compose, fixed = TRUE)))
   expect_true(any(grepl("LEARNRTRACKR_POSTGRES_PASSWORD=", env, fixed = TRUE)))
   expect_true(any(grepl("LEARNRTRACKR_POSTGRES_SCHEMA=", env, fixed = TRUE)))
+  expect_true(any(grepl("LEARNRTRACKR_PILOT_TUTORIAL_ID=", env, fixed = TRUE)))
   expect_true(any(grepl("LEARNRTRACKR_PILOT_GROUP_ID=", env, fixed = TRUE)))
   expect_true(any(grepl("LEARNRTRACKR_PILOT_OUTPUT_DIR=", env, fixed = TRUE)))
+  expect_true(any(grepl("LEARNRTRACKR_DASHBOARD_HOST=", env, fixed = TRUE)))
 })
 
 test_that("controlled PostgreSQL pilot works when a test DSN is configured", {

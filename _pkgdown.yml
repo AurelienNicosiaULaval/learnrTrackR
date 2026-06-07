@@ -66,6 +66,8 @@ reference:
   contents:
   - dashboard_data
   - run_dashboard
+  - run_dashboard_connection
+  - run_dashboard_postgres
   - summarise_questions
   - summarise_students
   - detect_difficult_questions

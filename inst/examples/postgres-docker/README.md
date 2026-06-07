@@ -44,9 +44,11 @@ Relevant `.env` values:
 
 ```text
 LEARNRTRACKR_POSTGRES_SCHEMA=learnrtrackr_pilot
+LEARNRTRACKR_PILOT_TUTORIAL_ID=stat_descriptive_pilot
 LEARNRTRACKR_PILOT_GROUP_ID=A
 LEARNRTRACKR_PILOT_OUTPUT_DIR=pilot-outputs
 LEARNRTRACKR_PILOT_RESET=true
+LEARNRTRACKR_DASHBOARD_HOST=127.0.0.1
 ```
 
 Run:
@@ -58,9 +60,17 @@ Rscript course-pilot-smoke-test.R
 The default output directory is `pilot-outputs/` in this directory. It is
 ignored by Git because it may contain student identifiers in real deployments.
 
-The interactive Shiny launcher still expects a SQLite path. For PostgreSQL,
-this pilot verifies the non-interactive dashboard data with
-`learnrTrackR::dashboard_data(con, ...)`, plus exports and report generation.
+## Run the PostgreSQL dashboard
+
+After running the course pilot smoke test, open the dashboard with:
+
+```sh
+Rscript run-dashboard.R
+```
+
+The script reads `.env`, connects to PostgreSQL, applies
+`LEARNRTRACKR_POSTGRES_SCHEMA`, filters by `LEARNRTRACKR_PILOT_GROUP_ID`, and
+uses `LEARNRTRACKR_DASHBOARD_TOKEN` when it is set to a real token.
 
 ## Stop PostgreSQL
 

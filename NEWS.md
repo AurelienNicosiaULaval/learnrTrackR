@@ -5,6 +5,8 @@
   report generation.
 - Added group filtering to `moodle_grades()` and `export_moodle_grades()`.
 - Added a controlled PostgreSQL pilot deployment smoke test and vignette.
+- Added PostgreSQL-aware teacher dashboard launchers for open DBI connections
+  and environment-variable based PostgreSQL settings.
 
 # learnrTrackR 0.1.1
 
