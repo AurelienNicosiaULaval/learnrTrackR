@@ -29,7 +29,7 @@ not registered with \code{\link[=register_questions]{register_questions()}}.}
 }
 \value{
 A list containing \code{summary}, \code{students}, \code{attempts}, \code{scores},
-\code{gradebook}, \code{questions}, and \code{moodle_grades} tibbles.
+\code{gradebook}, \code{questions}, \code{moodle_grades}, and \code{canvas_grades} tibbles.
 }
 \description{
 Builds a set of export tables for a tutorial, optionally filtered to one

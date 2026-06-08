@@ -16,6 +16,7 @@ articles:
   - instructor-adoption
   - teacher-workflow
   - moodle-export
+  - canvas-export
   - deployment-postgresql
   - pilot-deployment
 reference:
@@ -51,6 +52,8 @@ reference:
   - export_results
   - moodle_grades
   - export_moodle_grades
+  - canvas_grades
+  - export_canvas_grades
   - tracking_export_data
   - export_tracking_bundle
 - title: learnr helpers

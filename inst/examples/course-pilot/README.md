@@ -7,8 +7,8 @@ descriptive statistics tutorial and shows the full teacher workflow:
 - load course, tutorial, student, and question metadata from CSV files;
 - record tracked `learnr` questions and `gradethis` code checks;
 - simulate a small cohort without manual browser interaction;
-- inspect attempts, scores, gradebook rows, Moodle-ready grades, export
-  bundles, and a teacher report.
+- inspect attempts, scores, gradebook rows, Moodle-ready grades, Canvas
+  Gradebook grades, export bundles, and a teacher report.
 - launch a student-style session and a teacher output workflow from explicit R
   scripts.
 
@@ -96,8 +96,8 @@ cp teacher.env.example teacher.env
 Rscript run-teacher.R
 ```
 
-The script writes attempts, scores, gradebook rows, Moodle-ready grades, a rich
-export bundle, and a teacher report. Set
+The script writes attempts, scores, gradebook rows, Moodle-ready grades, Canvas
+Gradebook grades, a rich export bundle, and a teacher report. Set
 `LEARNRTRACKR_TEACHER_OPEN_DASHBOARD=true` in `teacher.env` to open the local
 dashboard after the exports are created.
 
@@ -126,6 +126,7 @@ The script writes:
 - scores CSV;
 - gradebook CSV;
 - Moodle-ready CSV;
+- Canvas Gradebook CSV;
 - rich export bundle;
 - HTML teacher report, when `rmarkdown` is installed.
 

@@ -157,6 +157,7 @@ outputs <- course_pilot_teacher_outputs(
 )
 
 moodle <- readr::read_csv(outputs$paths$moodle, show_col_types = FALSE)
+canvas <- readr::read_csv(outputs$paths$canvas, show_col_types = FALSE)
 
 message("PostgreSQL pilot schema: ", schema_name)
 message("PostgreSQL pilot group: ", group_id)
@@ -165,3 +166,5 @@ message("Dashboard summary:")
 print(outputs$dashboard$summary)
 message("Moodle-ready CSV:")
 print(moodle)
+message("Canvas Gradebook CSV:")
+print(canvas)

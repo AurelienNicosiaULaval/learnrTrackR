@@ -109,8 +109,8 @@ source(file.path(example_dir, "inspect-results.R"))
 ```
 
 The inspection script writes attempts, scores, gradebook rows, Moodle-ready
-grades, a rich export bundle, and an HTML teacher report when `rmarkdown` is
-available.
+grades, Canvas Gradebook grades, a rich export bundle, and an HTML teacher
+report when `rmarkdown` is available.
 
 # Dashboard
 

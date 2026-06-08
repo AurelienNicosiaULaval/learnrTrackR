@@ -127,7 +127,8 @@ test_that("course pilot simulation writes teacher outputs", {
       "course-pilot-attempts.csv",
       "course-pilot-scores.csv",
       "course-pilot-gradebook.csv",
-      "course-pilot-moodle.csv"
+      "course-pilot-moodle.csv",
+      "course-pilot-canvas.csv"
     )
   )
 
@@ -138,6 +139,12 @@ test_that("course pilot simulation writes teacher outputs", {
     file.path(output_dir, "course-pilot-moodle.csv"),
     show_col_types = FALSE
   )
+  canvas <- readr::read_csv(
+    file.path(output_dir, "course-pilot-canvas.csv"),
+    show_col_types = FALSE
+  )
   expect_setequal(moodle$useridnumber, c("student_demo", "student_a01", "student_a02"))
+  expect_setequal(canvas[["SIS User ID"]], c("student_demo", "student_a01", "student_a02"))
   expect_false("student_b01" %in% moodle$useridnumber)
+  expect_false("student_b01" %in% canvas[["SIS User ID"]])
 })

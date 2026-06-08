@@ -34,6 +34,7 @@ store simulated attempts and export results for inspection.
 - Build a gradebook that counts unanswered registered questions.
 - Export attempts or scores to CSV.
 - Export a simple Moodle-ready CSV grade table.
+- Export a Canvas Gradebook-style CSV grade table.
 - Document a cautious Moodle CSV import workflow.
 - Export rich CSV bundles for a tutorial, group, or student.
 - Open a minimal local Shiny teacher dashboard.
@@ -157,6 +158,12 @@ export_moodle_grades(
   tutorial_id = "module_01",
   grade_item = "Module 01 quiz"
 )
+export_canvas_grades(
+  con,
+  tempfile(fileext = ".csv"),
+  tutorial_id = "module_01",
+  assignment = "Module 01 quiz"
+)
 export_tracking_bundle(
   con,
   tempfile(),
@@ -249,7 +256,8 @@ A course-like pilot is available in `inst/examples/course-pilot/`. It contains
 a simulated descriptive statistics tutorial with tracked `learnr` questions,
 tracked `gradethis` code exercises, CSV configuration files, a cohort
 simulation script, explicit student and teacher launch scripts, Moodle export,
-dashboard launch, a preflight checklist, and teacher report generation.
+Canvas export, dashboard launch, a preflight checklist, and teacher report
+generation.
 
 The pilot includes both a CSV configuration directory and a single-file YAML
 configuration:
@@ -355,8 +363,8 @@ Rscript run-dashboard.R
 
 The pilot smoke test loads the `course-pilot` CSV configuration, records the
 simulated cohort in PostgreSQL, prepares dashboard data, writes Moodle-ready
-grades filtered by group, writes an export bundle, and renders an HTML teacher
-report when `rmarkdown` is installed.
+and Canvas Gradebook grades filtered by group, writes an export bundle, and
+renders an HTML teacher report when `rmarkdown` is installed.
 
 ## Privacy utilities
 
@@ -500,4 +508,16 @@ For the full Moodle CSV workflow, see:
 
 ```r
 vignette("moodle-export", package = "learnrTrackR")
+```
+
+`export_canvas_grades()` writes a Canvas Gradebook-style CSV with the standard
+leading columns `Student`, `ID`, `SIS User ID`, `SIS Login ID`, and `Section`,
+plus one assignment column. By default, `learnrTrackR` student identifiers are
+exported to `SIS User ID`, and raw gradebook scores are exported as assignment
+points. The identifiers must match the target Canvas course before import.
+
+For the Canvas CSV workflow, see:
+
+```r
+vignette("canvas-export", package = "learnrTrackR")
 ```

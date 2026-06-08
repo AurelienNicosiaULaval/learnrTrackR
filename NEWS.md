@@ -6,6 +6,7 @@
   research software submission.
 - Added an instructor adoption vignette for external teachers.
 - Added a controlled course pilot protocol checklist.
+- Added Canvas Gradebook CSV export helpers and a Canvas export vignette.
 
 # learnrTrackR 0.2.0
 

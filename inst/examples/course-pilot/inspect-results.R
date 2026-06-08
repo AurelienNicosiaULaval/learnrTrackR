@@ -78,6 +78,7 @@ run_course_pilot_inspection <- function() {
   message("Wrote scores to: ", outputs$paths$scores)
   message("Wrote gradebook to: ", outputs$paths$gradebook)
   message("Wrote Moodle-ready grades to: ", outputs$paths$moodle)
+  message("Wrote Canvas Gradebook grades to: ", outputs$paths$canvas)
   message("Wrote rich export bundle to: ", outputs$paths$bundle)
   message("Wrote teacher report to: ", outputs$paths$report)
   print(outputs$bundle_paths)

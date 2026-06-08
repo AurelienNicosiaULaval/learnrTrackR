@@ -160,6 +160,161 @@ test_that("export_moodle_grades writes a Moodle-ready CSV", {
   expect_equal(grades[["Module 01 quiz"]], 50)
 })
 
+test_that("canvas_grades creates a Canvas Gradebook table", {
+  db_path <- withr::local_tempfile(fileext = ".sqlite")
+  con <- init_tracking_db(db_path, overwrite = TRUE)
+  withr::defer(DBI::dbDisconnect(con))
+
+  register_questions(con, "module_01", c("q1", "q2"))
+  track_attempt(
+    con,
+    "student_001",
+    "module_01",
+    "q1",
+    "mean(x)",
+    score = 1,
+    max_score = 1
+  )
+
+  grades <- canvas_grades(
+    con,
+    tutorial_id = "module_01",
+    assignment = "Module 01 quiz"
+  )
+
+  expect_s3_class(grades, "tbl_df")
+  expect_equal(
+    names(grades),
+    c("Student", "ID", "SIS User ID", "SIS Login ID", "Section", "Module 01 quiz")
+  )
+  expect_equal(grades$Student, "student_001")
+  expect_equal(grades[["SIS User ID"]], "student_001")
+  expect_equal(grades[["Module 01 quiz"]], 1)
+})
+
+test_that("canvas_grades can export percentages and custom identifier columns", {
+  db_path <- withr::local_tempfile(fileext = ".sqlite")
+  con <- init_tracking_db(db_path, overwrite = TRUE)
+  withr::defer(DBI::dbDisconnect(con))
+
+  register_students(
+    con,
+    data.frame(
+      student_id = "student_001",
+      student_label = "Student One",
+      email = "student.one@example.test",
+      group_id = "A"
+    )
+  )
+  register_questions(
+    con,
+    "module_01",
+    data.frame(question_id = c("q1", "q2"), max_score = c(2, 2))
+  )
+  track_attempt(
+    con,
+    "student_001",
+    "module_01",
+    "q1",
+    "answer",
+    score = 1.25,
+    max_score = 2,
+    require_registered_student = TRUE
+  )
+
+  grades <- canvas_grades(
+    con,
+    tutorial_id = "module_01",
+    assignment = "Module 01 percent",
+    student_id_column = "SIS Login ID",
+    student_id_source = "email",
+    grade_value = "percent",
+    digits = 1
+  )
+
+  expect_equal(grades$Student, "Student One")
+  expect_equal(grades[["SIS User ID"]], "")
+  expect_equal(grades[["SIS Login ID"]], "student.one@example.test")
+  expect_equal(grades$Section, "A")
+  expect_equal(grades[["Module 01 percent"]], 31.2)
+})
+
+test_that("export_canvas_grades writes a Canvas Gradebook CSV", {
+  db_path <- withr::local_tempfile(fileext = ".sqlite")
+  canvas_path <- withr::local_tempfile(fileext = ".csv")
+
+  con <- init_tracking_db(db_path, overwrite = TRUE)
+  withr::defer(DBI::dbDisconnect(con))
+
+  register_questions(con, "module_01", c("q1", "q2"))
+  track_attempt(
+    con,
+    "student_001",
+    "module_01",
+    "q1",
+    "mean(x)",
+    score = 1,
+    max_score = 1
+  )
+
+  expect_invisible(
+    export_canvas_grades(
+      con,
+      canvas_path,
+      tutorial_id = "module_01",
+      assignment = "Module 01 quiz"
+    )
+  )
+
+  grades <- readr::read_csv(canvas_path, show_col_types = FALSE)
+
+  expect_equal(
+    names(grades),
+    c("Student", "ID", "SIS User ID", "SIS Login ID", "Section", "Module 01 quiz")
+  )
+  expect_equal(grades[["Module 01 quiz"]], 1)
+})
+
+test_that("canvas_grades filters by registered group", {
+  db_path <- withr::local_tempfile(fileext = ".sqlite")
+  con <- init_tracking_db(db_path, overwrite = TRUE)
+  withr::defer(DBI::dbDisconnect(con))
+
+  register_students(
+    con,
+    data.frame(
+      student_id = c("student_001", "student_002", "student_003"),
+      group_id = c("A", "B", "A")
+    )
+  )
+  register_questions(con, "module_01", c("q1", "q2"))
+  track_attempt(con, "student_001", "module_01", "q1", "mean(x)", score = 1, max_score = 1)
+  track_attempt(con, "student_002", "module_01", "q1", "sd(x)", score = 0, max_score = 1)
+
+  grades <- canvas_grades(
+    con,
+    tutorial_id = "module_01",
+    assignment = "Module 01 quiz",
+    group_id = "A"
+  )
+
+  expect_equal(grades[["SIS User ID"]], c("student_001", "student_003"))
+  expect_false("student_002" %in% grades[["SIS User ID"]])
+})
+
+test_that("canvas_grades rejects Canvas reserved assignment names", {
+  db_path <- withr::local_tempfile(fileext = ".sqlite")
+  con <- init_tracking_db(db_path, overwrite = TRUE)
+  withr::defer(DBI::dbDisconnect(con))
+
+  register_questions(con, "module_01", "q1")
+
+  expect_error(
+    canvas_grades(con, tutorial_id = "module_01", assignment = "Final Score"),
+    "reserved"
+  )
+})
+
 test_that("moodle_grades filters by registered group", {
   db_path <- withr::local_tempfile(fileext = ".sqlite")
   con <- init_tracking_db(db_path, overwrite = TRUE)
@@ -214,8 +369,10 @@ test_that("tracking_export_data filters by group and student", {
   expect_equal(group_data$attempts$student_id, "student_001")
   expect_equal(nrow(group_data$gradebook), 2)
   expect_equal(nrow(group_data$moodle_grades), 2)
+  expect_equal(nrow(group_data$canvas_grades), 2)
   expect_equal(student_data$students$student_id, "student_001")
   expect_equal(nrow(student_data$gradebook), 1)
+  expect_equal(nrow(student_data$canvas_grades), 1)
 })
 
 test_that("export_tracking_bundle writes all rich CSV files", {
@@ -238,7 +395,16 @@ test_that("export_tracking_bundle writes all rich CSV files", {
   expect_true(all(file.exists(paths$path)))
   expect_equal(
     paths$table,
-    c("summary", "students", "attempts", "scores", "gradebook", "questions", "moodle_grades")
+    c(
+      "summary",
+      "students",
+      "attempts",
+      "scores",
+      "gradebook",
+      "questions",
+      "moodle_grades",
+      "canvas_grades"
+    )
   )
 
   gradebook_path <- paths$path[paths$table == "gradebook"]

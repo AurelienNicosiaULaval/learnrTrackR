@@ -80,7 +80,7 @@ tracking_export_summary <- function(tutorial_id,
 #'   not registered with [register_questions()].
 #'
 #' @return A list containing `summary`, `students`, `attempts`, `scores`,
-#'   `gradebook`, `questions`, and `moodle_grades` tibbles.
+#'   `gradebook`, `questions`, `moodle_grades`, and `canvas_grades` tibbles.
 #' @export
 #'
 #' @examples
@@ -152,6 +152,10 @@ tracking_export_data <- function(con,
     grades = grades,
     tutorial_id = tutorial_id
   )
+  canvas <- canvas_grades_from_gradebook(
+    grades = grades,
+    tutorial_id = tutorial_id
+  )
 
   list(
     summary = tracking_export_summary(
@@ -169,15 +173,16 @@ tracking_export_data <- function(con,
     scores = scores,
     gradebook = grades,
     questions = questions,
-    moodle_grades = moodle
+    moodle_grades = moodle,
+    canvas_grades = canvas
   )
 }
 
 #' Export a rich tracking CSV bundle
 #'
 #' Writes several CSV files for a tutorial: summary, students, attempts, scores,
-#' gradebook, questions, and Moodle-ready grades. The export can be filtered by
-#' registered group or by student.
+#' gradebook, questions, Moodle-ready grades, and Canvas Gradebook grades. The
+#' export can be filtered by registered group or by student.
 #'
 #' @inheritParams tracking_export_data
 #' @param path Output directory. It is created if it does not exist.

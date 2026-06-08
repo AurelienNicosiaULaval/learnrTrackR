@@ -128,6 +128,7 @@ course_pilot_teacher_outputs <- function(con,
   scores_path <- file.path(output_dir, "course-pilot-scores.csv")
   gradebook_path <- file.path(output_dir, "course-pilot-gradebook.csv")
   moodle_path <- file.path(output_dir, "course-pilot-moodle.csv")
+  canvas_path <- file.path(output_dir, "course-pilot-canvas.csv")
   bundle_dir <- file.path(output_dir, "course-pilot-bundle")
   report_path <- file.path(output_dir, "course-pilot-teacher-report.html")
 
@@ -139,6 +140,13 @@ course_pilot_teacher_outputs <- function(con,
     moodle_path,
     tutorial_id = tutorial_id,
     grade_item = "Descriptive statistics pilot",
+    group_id = group_filter
+  )
+  learnrTrackR::export_canvas_grades(
+    con,
+    canvas_path,
+    tutorial_id = tutorial_id,
+    assignment = "Descriptive statistics pilot",
     group_id = group_filter
   )
   bundle_paths <- learnrTrackR::export_tracking_bundle(
@@ -173,6 +181,7 @@ course_pilot_teacher_outputs <- function(con,
         scores = scores_path,
         gradebook = gradebook_path,
         moodle = moodle_path,
+        canvas = canvas_path,
         bundle = bundle_dir,
         report = report_path
       )

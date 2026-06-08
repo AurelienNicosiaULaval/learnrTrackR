@@ -1,0 +1,177 @@
+---
+title: "Exporting grades to Canvas"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Exporting grades to Canvas}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+# Scope
+
+This guide shows how to prepare a Canvas Gradebook-style CSV grade file from
+`learnrTrackR`. The package does not call the Canvas API. The workflow is a
+manual CSV import into the Canvas Gradebook.
+
+Instructure's Canvas Instructor Guide states that Gradebook CSV uploads can
+update existing assignment grades or create new assignments, but they cannot
+update other Gradebook areas such as assignment status, comments, or grade
+posting policies.
+
+# Create a small gradebook
+
+```{r setup}
+library(learnrTrackR)
+
+db_path <- tempfile(fileext = ".sqlite")
+con <- init_tracking_db(db_path, overwrite = TRUE)
+
+register_students(
+  con,
+  data.frame(
+    student_id = c("student_001", "student_002"),
+    student_label = c("Student 1", "Student 2"),
+    email = c("student.001@example.test", "student.002@example.test"),
+    group_id = c("A", "A")
+  )
+)
+
+register_questions(
+  con,
+  tutorial_id = "module_01",
+  questions = data.frame(
+    question_id = c("q1", "q2"),
+    max_score = c(1, 1)
+  )
+)
+
+track_attempt(
+  con,
+  student_id = "student_001",
+  tutorial_id = "module_01",
+  question_id = "q1",
+  submitted_answer = "mean(x)",
+  score = 1,
+  max_score = 1,
+  require_registered_student = TRUE
+)
+
+track_attempt(
+  con,
+  student_id = "student_002",
+  tutorial_id = "module_01",
+  question_id = "q1",
+  submitted_answer = "sd(x)",
+  score = 0,
+  max_score = 1,
+  require_registered_student = TRUE
+)
+```
+
+# Build the Canvas table
+
+`canvas_grades()` returns a wide table with the standard leading columns used
+in Canvas Gradebook CSV files and one assignment grade column.
+
+```{r canvas-table}
+canvas_grades(
+  con,
+  tutorial_id = "module_01",
+  assignment = "Module 01 quiz"
+)
+```
+
+By default, `learnrTrackR` writes `student_id` values to the `SIS User ID`
+column. If your Canvas course matches users with another field, change the
+identifier mapping.
+
+```{r login-id}
+canvas_grades(
+  con,
+  tutorial_id = "module_01",
+  assignment = "Module 01 quiz",
+  student_id_column = "SIS Login ID",
+  student_id_source = "email"
+)
+```
+
+The default grade value is the raw `score`, because Canvas assignment imports
+are interpreted as assignment points. If the Canvas assignment is intended to
+receive a 0 to 100 value, use `grade_value = "percent"`.
+
+```{r percent}
+canvas_grades(
+  con,
+  tutorial_id = "module_01",
+  assignment = "Module 01 percent",
+  grade_value = "percent"
+)
+```
+
+# Export the CSV file
+
+```{r export}
+csv_path <- tempfile(fileext = ".csv")
+
+export_canvas_grades(
+  con,
+  path = csv_path,
+  tutorial_id = "module_01",
+  assignment = "Module 01 quiz",
+  grade_value = "score",
+  digits = 2
+)
+
+readr::read_csv(csv_path, show_col_types = FALSE)
+```
+
+If the database contains several registered groups, use `group_id` to export
+only one cohort:
+
+```{r group-export}
+canvas_grades(
+  con,
+  tutorial_id = "module_01",
+  assignment = "Module 01 quiz",
+  group_id = "A"
+)
+```
+
+# Suggested Canvas import workflow
+
+Before importing into a real course:
+
+1. Export the current Canvas Gradebook first.
+2. Compare the Canvas identifier columns with the `learnrTrackR` export.
+3. Confirm whether your course uses `ID`, `SIS User ID`, or `SIS Login ID`.
+4. Create the Canvas assignment first when possible, especially when grading
+   periods are enabled.
+5. Generate a `learnrTrackR` CSV with the matching identifier column.
+6. Import the CSV in Canvas's Gradebook import interface.
+7. Review the Canvas import preview before saving changes.
+8. Validate the workflow on a small test group before importing a full cohort.
+
+# Privacy check before import
+
+The Canvas grade CSV should contain only the identifiers needed for matching,
+the section when operationally useful, and the assignment grade column. Do not
+include attempts, feedback, free-text answers, or pseudonymisation keys in a
+Canvas import file.
+
+```{r disconnect, include = FALSE}
+DBI::dbDisconnect(con)
+```
+
+# References
+
+- Instructure. Accessed 2026-06-08. How do I import grades in the Gradebook?
+  <https://community.canvaslms.com/t5/Instructor-Guide/How-do-I-import-grades-in-the-Gradebook/ta-p/807>
+- Instructure. Accessed 2026-06-08. How do I export grades in the Gradebook?
+  <https://community.canvaslms.com/t5/Instructor-Guide/How-do-I-export-grades-in-the-Gradebook/ta-p/809>

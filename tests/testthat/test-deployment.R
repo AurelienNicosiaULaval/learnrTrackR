@@ -85,11 +85,15 @@ test_that("controlled PostgreSQL pilot works when a test DSN is configured", {
   )
 
   moodle <- readr::read_csv(outputs$paths$moodle, show_col_types = FALSE)
+  canvas <- readr::read_csv(outputs$paths$canvas, show_col_types = FALSE)
 
   expect_equal(nrow(get_attempts(con, tutorial_id = course_pilot_tutorial_id())), 18)
   expect_equal(nrow(outputs$gradebook), 4)
   expect_setequal(moodle$useridnumber, c("student_demo", "student_a01", "student_a02"))
+  expect_setequal(canvas[["SIS User ID"]], c("student_demo", "student_a01", "student_a02"))
   expect_false("student_b01" %in% moodle$useridnumber)
+  expect_false("student_b01" %in% canvas[["SIS User ID"]])
   expect_true(file.exists(outputs$paths$moodle))
+  expect_true(file.exists(outputs$paths$canvas))
   expect_true(dir.exists(outputs$paths$bundle))
 })

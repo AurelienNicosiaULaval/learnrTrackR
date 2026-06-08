@@ -95,8 +95,8 @@ The smoke test:
 3. loads the course, tutorial, student, and question CSV configuration;
 4. records the simulated cohort attempts;
 5. prepares dashboard data with `dashboard_data(con, ...)`;
-6. writes attempts, scores, gradebook, Moodle-ready grades, and a rich export
-   bundle;
+6. writes attempts, scores, gradebook, Moodle-ready grades, Canvas Gradebook
+   grades, and a rich export bundle;
 7. renders an HTML teacher report when `rmarkdown` is installed.
 
 # Inspect the teacher outputs
@@ -114,12 +114,14 @@ course-pilot-attempts.csv
 course-pilot-scores.csv
 course-pilot-gradebook.csv
 course-pilot-moodle.csv
+course-pilot-canvas.csv
 course-pilot-teacher-report.html
 course-pilot-bundle/
 ```
 
 The Moodle CSV is filtered by `LEARNRTRACKR_PILOT_GROUP_ID`. For example,
 `LEARNRTRACKR_PILOT_GROUP_ID=A` exports only the configured group A learners.
+The Canvas CSV uses the same group filter.
 
 # Dashboard
 

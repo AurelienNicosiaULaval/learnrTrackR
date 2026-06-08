@@ -26,7 +26,7 @@ The current package supports a cautious prototype workflow:
 2. launch a tracked `learnr` tutorial;
 3. store attempts in SQLite or PostgreSQL;
 4. inspect teacher-facing results;
-5. export Moodle-ready grades and richer CSV bundles;
+5. export Moodle-ready grades, Canvas Gradebook grades, and richer CSV bundles;
 6. document privacy, retention, and known limitations.
 
 This guide does not provide institutional authentication, Moodle API
@@ -146,8 +146,8 @@ Rscript run-teacher.R
 ```
 
 The teacher script creates attempts, scores, gradebook rows, Moodle-ready
-grades, a rich export bundle, and an HTML teacher report when `rmarkdown` is
-available.
+grades, Canvas Gradebook grades, a rich export bundle, and an HTML teacher
+report when `rmarkdown` is available.
 
 ## 5. Inspect before importing grades
 
@@ -161,6 +161,10 @@ Before importing into Moodle:
 
 MoodleDocs documents CSV grade import through the Moodle gradebook. The
 package deliberately exports CSV files and does not call the Moodle API.
+
+Canvas also supports CSV uploads to the Gradebook. `export_canvas_grades()`
+writes a Canvas Gradebook-style CSV, but the identifier columns must be
+checked against the target Canvas course before import.
 
 ## 6. Choose the deployment boundary
 

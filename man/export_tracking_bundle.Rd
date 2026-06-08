@@ -39,8 +39,8 @@ A tibble with export table names and file paths, invisibly.
 }
 \description{
 Writes several CSV files for a tutorial: summary, students, attempts, scores,
-gradebook, questions, and Moodle-ready grades. The export can be filtered by
-registered group or by student.
+gradebook, questions, Moodle-ready grades, and Canvas Gradebook grades. The
+export can be filtered by registered group or by student.
 }
 \examples{
 db_path <- tempfile(fileext = ".sqlite")

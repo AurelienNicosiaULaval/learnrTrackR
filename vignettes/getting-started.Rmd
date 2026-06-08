@@ -121,6 +121,12 @@ export_moodle_grades(
   tutorial_id = "module_01",
   grade_item = "Module 01 quiz"
 )
+export_canvas_grades(
+  con,
+  tempfile(fileext = ".csv"),
+  tutorial_id = "module_01",
+  assignment = "Module 01 quiz"
+)
 
 file.exists(c(attempts_path, scores_path, gradebook_path, moodle_path))
 ```

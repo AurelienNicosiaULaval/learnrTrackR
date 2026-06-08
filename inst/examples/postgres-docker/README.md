@@ -36,9 +36,9 @@ gradebook row.
 
 The course pilot smoke test uses the installed `course-pilot` example. It
 creates an isolated PostgreSQL schema, loads the CSV configuration, records the
-simulated cohort, prepares dashboard data, writes Moodle-ready grades filtered
-by group, writes a rich export bundle, and renders a teacher report when
-`rmarkdown` is installed.
+simulated cohort, prepares dashboard data, writes Moodle-ready and Canvas
+Gradebook grades filtered by group, writes a rich export bundle, and renders a
+teacher report when `rmarkdown` is installed.
 
 Relevant `.env` values:
 
