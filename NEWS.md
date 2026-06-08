@@ -1,3 +1,10 @@
+# learnrTrackR 0.2.0.9000
+
+- Added citation and archival metadata for future scholarly software
+  publication work.
+- Added a publication preparation plan for a possible open-source education or
+  research software submission.
+
 # learnrTrackR 0.2.0
 
 - Added a course pilot example showing a realistic tracked `learnr` tutorial,

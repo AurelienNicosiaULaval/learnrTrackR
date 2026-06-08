@@ -1,0 +1,10 @@
+citHeader("To cite learnrTrackR, use:")
+
+bibentry(
+  bibtype = "Manual",
+  title = "learnrTrackR: Track Simulated learnr Tutorial Attempts",
+  author = person(given = "Aur\u00e9lien", family = "Nicosia"),
+  year = "2026",
+  note = "R package version 0.2.0.9000",
+  url = "https://github.com/AurelienNicosiaULaval/learnrTrackR"
+)

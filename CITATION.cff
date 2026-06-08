@@ -1,0 +1,21 @@
+cff-version: 1.2.0
+message: "If you use learnrTrackR, please cite it as below."
+title: "learnrTrackR: Track Simulated learnr Tutorial Attempts"
+version: 0.2.0.9000
+authors:
+  - family-names: Nicosia
+    given-names: Aurélien
+    email: 116816597+AurelienNicosiaULaval@users.noreply.github.com
+repository-code: "https://github.com/AurelienNicosiaULaval/learnrTrackR"
+url: "https://aureliennicosiaulaval.github.io/learnrTrackR/"
+license: MIT
+abstract: "An R package for tracking learnr-style tutorial attempts, storing results in SQLite or PostgreSQL, computing teacher-facing scores, and exporting pilot course results."
+keywords:
+  - R
+  - learnr
+  - educational software
+  - statistics education
+  - reproducible teaching
+  - learning analytics
+  - SQLite
+  - PostgreSQL

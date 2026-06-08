@@ -2,11 +2,14 @@
 ^\.git$
 ^\.git/
 ^\.gitignore$
+^\.zenodo\.json$
 ^\.DS_Store$
 ^.*\.DS_Store$
+^CITATION\.cff$
 ^LICENSE\.md$
 ^learnrTrackR\.Rcheck$
 ^plan_learnrTrackR\.md$
+^publication-plan\.md$
 ^_pkgdown\.yml$
 ^doc$
 ^Meta$

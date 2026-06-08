@@ -363,6 +363,31 @@ anonymous <- anonymise_results(pseudo$data)
 
 See `privacy.md` for practical data-governance notes.
 
+## Citation and archiving
+
+The repository includes citation and archival metadata for future scholarly
+software publication work:
+
+```text
+CITATION.cff
+inst/CITATION
+.zenodo.json
+publication-plan.md
+```
+
+`CITATION.cff` provides human-readable and machine-readable citation metadata
+for GitHub and other tools. The R citation file in `inst/CITATION` supports
+`citation("learnrTrackR")` after installation. The `.zenodo.json` file prepares
+release metadata for GitHub-to-Zenodo archiving, but it does not create a DOI
+by itself. A DOI will require enabling Zenodo for the GitHub repository and
+archiving a tagged release.
+
+The metadata follow the Citation File Format documentation and Zenodo's
+GitHub metadata documentation:
+
+- https://citation-file-format.github.io/
+- https://help.zenodo.org/docs/github/describe-software/zenodo-json/
+
 ## Pedagogical analytics
 
 The package can produce teacher-facing summaries for an individual tutorial:
