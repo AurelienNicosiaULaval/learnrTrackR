@@ -33,6 +33,7 @@ test_that("course pilot includes launch scripts and checklist", {
       "student.env.example",
       "teacher.env.example",
       "pilot-checklist.md",
+      "pilot-protocol.md",
       "config/tracking.yml"
     )
   )
@@ -44,12 +45,15 @@ test_that("course pilot includes launch scripts and checklist", {
   student_launcher <- readLines(file.path(example_dir, "run-student.R"), warn = FALSE)
   teacher_launcher <- readLines(file.path(example_dir, "run-teacher.R"), warn = FALSE)
   checklist <- readLines(file.path(example_dir, "pilot-checklist.md"), warn = FALSE)
+  protocol <- readLines(file.path(example_dir, "pilot-protocol.md"), warn = FALSE)
 
   expect_true(any(grepl("learnr::run_tutorial", student_launcher, fixed = TRUE)))
   expect_true(any(grepl("inspect-results.R", teacher_launcher, fixed = TRUE)))
   expect_true(any(grepl("LEARNRTRACKR_TEACHER_OPEN_DASHBOARD", teacher_launcher, fixed = TRUE)))
   expect_true(any(grepl("Moodle import", checklist, fixed = TRUE)))
   expect_true(any(grepl("Privacy", checklist, fixed = TRUE)))
+  expect_true(any(grepl("Evidence boundaries", protocol, fixed = TRUE)))
+  expect_true(any(grepl("success criteria", protocol, fixed = TRUE)))
 })
 
 test_that("course pilot YAML configuration matches the CSV configuration", {

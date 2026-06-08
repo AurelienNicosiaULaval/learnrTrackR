@@ -4,6 +4,8 @@
   publication work.
 - Added a publication preparation plan for a possible open-source education or
   research software submission.
+- Added an instructor adoption vignette for external teachers.
+- Added a controlled course pilot protocol checklist.
 
 # learnrTrackR 0.2.0
 

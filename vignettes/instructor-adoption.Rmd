@@ -1,0 +1,226 @@
+---
+title: "Instructor adoption guide"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Instructor adoption guide}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+# Scope
+
+This guide is written for an instructor who wants to try `learnrTrackR` in a
+small, controlled teaching workflow. It focuses on adoption rather than package
+development.
+
+The current package supports a cautious prototype workflow:
+
+1. prepare course, tutorial, student, and question metadata;
+2. launch a tracked `learnr` tutorial;
+3. store attempts in SQLite or PostgreSQL;
+4. inspect teacher-facing results;
+5. export Moodle-ready grades and richer CSV bundles;
+6. document privacy, retention, and known limitations.
+
+This guide does not provide institutional authentication, Moodle API
+integration, or a full production deployment plan.
+
+# Start from the course pilot
+
+The most complete example is the course pilot:
+
+```{r locate}
+library(learnrTrackR)
+
+pilot_dir <- system.file("examples/course-pilot", package = "learnrTrackR")
+pilot_dir
+```
+
+It contains the tutorial, simulated data, launch scripts, configuration files,
+teacher outputs, an operational checklist, and a pilot protocol.
+
+```{r list-files}
+list.files(pilot_dir)
+```
+
+# Adoption workflow
+
+## 1. Install and rehearse locally
+
+Install the package from the local source tree or from GitHub. During package
+development, from the repository root:
+
+```{r install-local, eval = FALSE}
+devtools::install(dependencies = FALSE)
+```
+
+Then rehearse the course pilot with simulated data:
+
+```{r simulate, eval = FALSE}
+source("inst/examples/course-pilot/simulate-results.R")
+source("inst/examples/course-pilot/inspect-results.R")
+```
+
+This creates a local SQLite database and teacher-facing outputs without asking
+learners to use the tutorial.
+
+## 2. Adapt the configuration
+
+Copy the course pilot configuration to a new working directory and edit the
+CSV files:
+
+```text
+config-csv/
+  courses.csv
+  tutorials.csv
+  students.csv
+  questions.csv
+```
+
+The key adoption checks are:
+
+1. every assessed question in the tutorial appears in `questions.csv`;
+2. every expected learner appears once in `students.csv`;
+3. the `student_id` values match the identifier that will be used for Moodle
+   matching or teacher inspection;
+4. `max_score` values match the intended grading scheme;
+5. `group_id` values match the cohorts the teacher will inspect and export.
+
+If a single-file configuration is easier to maintain, use the YAML template:
+
+```{r yaml-template, eval = FALSE}
+create_tracking_config_template("tracking.yml", format = "yaml")
+```
+
+## 3. Adapt the tutorial
+
+For a new `learnr` tutorial, initialize tracking once in a setup chunk:
+
+```{r setup-context, eval = FALSE}
+tracking <- setup_learnr_tracking(
+  db_path = Sys.getenv("LEARNRTRACKR_DB"),
+  student_id = Sys.getenv("LEARNRTRACKR_STUDENT_ID"),
+  config = "config-csv",
+  require_registered_student = TRUE
+)
+```
+
+Then use tracked question helpers for supported built-in question types:
+
+```{r tracked-question, eval = FALSE}
+tracked_question_radio(
+  question_id = "q1",
+  label = "Which value is the sample mean?",
+  answer("6.42", correct = TRUE),
+  answer("5.00"),
+  tracking = tracking
+)
+```
+
+For `gradethis` exercises, call `track_gradethis_attempt()` explicitly inside
+the grading code.
+
+## 4. Launch student and teacher scripts
+
+For a student-style local launch:
+
+```{sh student-launch, eval = FALSE}
+cd inst/examples/course-pilot
+cp student.env.example student.env
+Rscript run-student.R
+```
+
+For teacher outputs:
+
+```{sh teacher-launch, eval = FALSE}
+cd inst/examples/course-pilot
+cp teacher.env.example teacher.env
+Rscript run-teacher.R
+```
+
+The teacher script creates attempts, scores, gradebook rows, Moodle-ready
+grades, a rich export bundle, and an HTML teacher report when `rmarkdown` is
+available.
+
+## 5. Inspect before importing grades
+
+Before importing into Moodle:
+
+1. inspect the Moodle CSV manually;
+2. confirm that the identifier column matches exactly one Moodle user per row;
+3. confirm that any `group_id` filter excluded learners from other groups;
+4. import first into a test activity or sandbox course when possible;
+5. retain the generated CSV only as long as needed under the local data plan.
+
+MoodleDocs documents CSV grade import through the Moodle gradebook. The
+package deliberately exports CSV files and does not call the Moodle API.
+
+## 6. Choose the deployment boundary
+
+SQLite is appropriate for local rehearsal and small prototypes. PostgreSQL is
+the better rehearsal path when several learner sessions must write to the same
+server-backed database.
+
+For a local PostgreSQL rehearsal:
+
+```{sh postgres-rehearsal, eval = FALSE}
+cd inst/examples/postgres-docker
+cp env.example .env
+docker compose --env-file .env up -d
+Rscript course-pilot-smoke-test.R
+Rscript run-dashboard.R
+```
+
+The dashboard should be treated as a teacher inspection interface. It does not
+replace institutional authentication or a managed access-control system.
+
+# Pilot readiness gate
+
+Before using the package with real learners, complete these checks:
+
+- [ ] The tutorial version and question list are frozen for the pilot.
+- [ ] The student identifier has been chosen and tested against Moodle.
+- [ ] The database backend has been rehearsed from a clean start.
+- [ ] The teacher export directory is outside Git and access-restricted.
+- [ ] The Moodle CSV has been tested with a small sample.
+- [ ] The dashboard, if used, is local or protected by the deployment
+      environment.
+- [ ] The data-retention period is documented.
+- [ ] The instructor has read `pilot-checklist.md` and `pilot-protocol.md`.
+- [ ] Research or publication claims have been separated from routine teaching
+      use.
+
+# What to record after the pilot
+
+For software adoption and possible publication, record:
+
+1. package version and Git commit;
+2. database backend and deployment context;
+3. tutorial identifier and version;
+4. number of configured learners, without publishing direct identifiers;
+5. number of attempts, missing submissions, and export issues;
+6. teacher workflow problems observed during setup or grading;
+7. data-retention decisions and any privacy deviations;
+8. limitations that should be described in a paper or release note.
+
+Do not claim learning gains, improved engagement, or reduced workload unless a
+study design and collected data support those claims.
+
+# References
+
+- Posit Software, PBC. Accessed 2026-06-08. `learnr::run_tutorial()`.
+  <https://pkgs.rstudio.com/learnr/reference/run_tutorial.html>
+- MoodleDocs. Accessed 2026-06-08. Grade import.
+  <https://docs.moodle.org/en/Grade_import>
+- Posit Software, PBC. Accessed 2026-06-08. Posit Connect authentication.
+  <https://docs.posit.co/connect/admin/authentication/>
+- Interagency Advisory Panel on Research Ethics. 2022. TCPS 2: Ethical
+  Conduct for Research Involving Humans.
+  <https://ethics.gc.ca/eng/policy-politique_tcps2-eptc2_2022.html>

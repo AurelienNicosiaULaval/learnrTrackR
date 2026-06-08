@@ -300,7 +300,15 @@ learnr::run_tutorial(
 ```
 
 Before a real controlled pilot, read
-`inst/examples/course-pilot/pilot-checklist.md`.
+`inst/examples/course-pilot/pilot-checklist.md` and
+`inst/examples/course-pilot/pilot-protocol.md`.
+
+For an adoption-oriented guide written from the perspective of an external
+teacher, see:
+
+```r
+vignette("instructor-adoption", package = "learnrTrackR")
+```
 
 ## PostgreSQL prototype
 
@@ -405,13 +413,13 @@ by registered group.
 
 ## Short roadmap after 0.2.0
 
-1. Rehearse the course pilot with one real tutorial section and a small number
-   of volunteer learners.
+1. Rehearse the course pilot with the instructor adoption guide and pilot
+   protocol.
 2. Decide the institutional student identifier, authentication boundary, and
    data-retention period outside the package.
-3. Add a deployment guide for a managed Shiny or Posit Connect environment.
-4. Add stricter operational checks for duplicate learners, missing questions,
+3. Add stricter operational checks for duplicate learners, missing questions,
    and unexpected Moodle export rows.
+4. Add a deployment guide for a managed Shiny or Posit Connect environment.
 5. Prepare a `0.3.0` release focused on production deployment hardening.
 
 ## Minimal learnr prototype

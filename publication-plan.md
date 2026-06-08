@@ -35,22 +35,32 @@ an article that goes beyond an ordinary vignette:
 
 https://journal.r-project.org/
 
-## Work needed before submission
+## Submission readiness checklist
 
-1. Archive a tagged release with Zenodo after enabling the GitHub integration.
-2. Add the resulting DOI to `CITATION.cff`, `.zenodo.json`, `README.md`, and
-   `inst/CITATION`.
-3. Run a small controlled pilot with a real or semi-real tutorial section.
-4. Record the pilot protocol, privacy decisions, deployment context, and known
-   limitations.
-5. Add an instructor adoption vignette that explains setup, deployment,
-   privacy, export, and post-pilot inspection from an external teacher's point
-   of view.
-6. Prepare a short paper with problem statement, design goals, package
-   architecture, example workflow, reproducibility notes, limitations, and
-   future work.
-7. Keep all claims descriptive unless they are supported by collected data and
-   an appropriate evaluation design.
+- [x] Add citation metadata in `CITATION.cff`.
+- [x] Add R citation metadata in `inst/CITATION`.
+- [x] Add preliminary Zenodo metadata in `.zenodo.json`.
+- [x] Add an instructor adoption vignette for external teachers.
+- [x] Add a controlled pilot protocol in
+  `inst/examples/course-pilot/pilot-protocol.md`.
+- [ ] Archive a tagged release with Zenodo after enabling the GitHub
+  integration.
+- [ ] Add the resulting DOI to `CITATION.cff`, `.zenodo.json`, `README.md`, and
+  `inst/CITATION`.
+- [ ] Run a small controlled pilot with a real or semi-real tutorial section.
+- [ ] Record the pilot protocol, privacy decisions, deployment context, and
+  known limitations after the pilot.
+- [ ] Prepare a short paper with problem statement, design goals, package
+  architecture, example workflow, reproducibility notes, limitations, and
+  future work.
+- [ ] Keep all claims descriptive unless they are supported by collected data
+  and an appropriate evaluation design.
+
+## Next publication increment
+
+The next useful publication-oriented increment is a first `paper.md` draft in
+Open Journals style. It should describe the software and adoption workflow
+without claiming learning gains.
 
 ## Evidence to avoid claiming without data
 

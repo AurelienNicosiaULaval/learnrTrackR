@@ -123,7 +123,8 @@ run_dashboard(Sys.getenv("LEARNRTRACKR_DB"), group_id = "A")
 The dashboard is a local inspection interface for prototypes. It does not
 replace institutional authentication.
 
-# Preflight checklist
+# Preflight checklist and protocol
 
-The example includes `pilot-checklist.md`. Read it before using the workflow
-with real learners.
+The example includes `pilot-checklist.md` for operational checks and
+`pilot-protocol.md` for a controlled pilot plan. Read both before using the
+workflow with real learners.

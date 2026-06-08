@@ -158,7 +158,8 @@ run_dashboard_postgres(
 
 Before a real controlled pilot:
 
-1. read `pilot-checklist.md` in the `course-pilot` example;
+1. read `pilot-checklist.md` and `pilot-protocol.md` in the `course-pilot`
+   example;
 2. choose the student identifier used for Moodle matching;
 3. prepare `students.csv` with only necessary student metadata;
 4. set a PostgreSQL password that is not committed to Git;
