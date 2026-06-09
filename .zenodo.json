@@ -5,8 +5,8 @@
       "affiliation": "Université Laval"
     }
   ],
-  "title": "learnrTrackR: Track Simulated learnr Tutorial Attempts",
-  "version": "0.2.0.9000",
+  "title": "learnrTrackR: Track learnr-Style Tutorial Attempts",
+  "version": "0.3.0",
   "description": "An R package for tracking learnr-style tutorial attempts, storing results in SQLite or PostgreSQL, computing teacher-facing scores, and exporting pilot course results.",
   "access_right": "open",
   "license": "mit",

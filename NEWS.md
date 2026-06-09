@@ -1,11 +1,14 @@
-# learnrTrackR 0.2.0.9000
+# learnrTrackR 0.3.0
 
 - Added citation and archival metadata for future scholarly software
   publication work.
 - Added a publication preparation plan for a possible open-source education or
   research software submission.
+- Added an initial Open Journals style paper draft in `paper/paper.md`.
 - Added an instructor adoption vignette for external teachers.
 - Added a controlled course pilot protocol checklist.
+- Added a post-pilot record template for documenting pilot evidence,
+  limitations, and privacy decisions.
 - Added Canvas Gradebook CSV export helpers and a Canvas export vignette.
 
 # learnrTrackR 0.2.0

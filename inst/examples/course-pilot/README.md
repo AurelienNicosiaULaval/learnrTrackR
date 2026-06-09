@@ -29,6 +29,7 @@ course-pilot/
   teacher.env.example
   pilot-checklist.md
   pilot-protocol.md
+  pilot-record-template.md
   tracking-strategy.md
   config/
     tracking.yml
@@ -154,4 +155,6 @@ authentication layer.
 ## Preflight checklist
 
 Before a real controlled pilot, read `pilot-checklist.md` for operational
-checks and `pilot-protocol.md` for the pilot plan.
+checks and `pilot-protocol.md` for the pilot plan. After the pilot, use
+`pilot-record-template.md` to record aggregate workflow evidence, issues,
+privacy decisions, and next actions without committing identifiable data.

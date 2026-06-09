@@ -1,5 +1,43 @@
 # Plan complet du projet learnrTrackR
 
+## État actuel au 2026-06-09
+
+Le projet a dépassé le MVP initial. La version courante est `0.3.0` et doit
+être considérée comme une version pilote contrôlée, pas comme une version
+institutionnelle stable.
+
+Éléments réalisés :
+
+- squelette de package R installable;
+- stockage SQLite;
+- support PostgreSQL optionnel;
+- suivi de tentatives simulées;
+- intégration explicite avec des tutoriels `learnr`;
+- helpers pour questions `learnr` et corrections `gradethis`;
+- identification simple par variable d'environnement;
+- scoring, gradebook et prise en compte des questions non répondues;
+- exports CSV, Moodle et Canvas;
+- tableau de bord Shiny local;
+- configuration YAML et CSV;
+- exemple de pilotage de cours;
+- guide de confidentialité et fonctions de suppression, anonymisation et
+  pseudonymisation;
+- analyses pédagogiques et rapport enseignant;
+- site pkgdown, métadonnées de citation, plan de publication et brouillon de
+  papier.
+
+Ce qui reste avant une version stable :
+
+- exécuter un petit pilote contrôlé avec des données réelles ou semi-réelles;
+- remplir le gabarit de bilan post-pilote;
+- documenter les limites observées en déploiement;
+- renforcer les contrôles opérationnels avant export LMS;
+- finaliser une stratégie d'authentification et de rétention hors package;
+- réviser le papier avec des preuves descriptives du pilote;
+- archiver une release avec Zenodo et ajouter le DOI réel aux fichiers de
+  citation;
+- stabiliser l'API avant une éventuelle version `1.0.0`.
+
 ## 1. Vision générale du projet
 
 Le projet vise à combler un manque important dans l’écosystème `learnr`.
@@ -916,70 +954,78 @@ Livrables :
 - stockage des scores;
 - documentation.
 
-## Version 0.3.0 : scoring
+## Version 0.3.0 : version pilote contrôlée
 
 Objectif :
 
 ```text
-Produire des notes finales.
+Préparer un pilote contrôlé documenté.
 ```
 
-Fonctions :
+Livrables :
 
-```r
-compute_scores()
-gradebook()
-export_gradebook()
-```
+- exports Moodle et Canvas;
+- tableau de bord local;
+- support PostgreSQL optionnel;
+- protocole de pilote;
+- gabarit de bilan post-pilote;
+- métadonnées de citation;
+- brouillon de papier descriptif.
 
-## Version 0.4.0 : export Moodle
+## Version 0.4.0 : durcissement opérationnel
 
 Objectif :
 
 ```text
-Produire un fichier de notes importable.
+Réduire les risques avant un déploiement contrôlé avec de vrais groupes.
 ```
 
-Fonctions :
+Ajouts prioritaires :
 
-```r
-export_moodle_grades()
-```
+- contrôles de doublons dans les identifiants étudiants;
+- contrôles de questions manquantes ou non attendues;
+- diagnostics avant export LMS;
+- guide de déploiement Posit Connect ou Shiny Server;
+- procédure de rétention et suppression plus explicite.
 
-## Version 0.5.0 : dashboard Shiny
+## Version 0.5.0 : retour de pilote
 
 Objectif :
 
 ```text
-Consulter les résultats visuellement.
+Intégrer les observations d'un petit pilote réel ou semi-réel.
 ```
 
-Fonctions :
+Ajouts prioritaires :
 
-```r
-run_dashboard()
-```
+- bilan post-pilote;
+- corrections issues du pilote;
+- documentation des limites observées;
+- révision du papier avec preuves descriptives;
+- préparation d'une release archivée avec DOI.
 
-## Version 0.6.0 : PostgreSQL
+## Version 0.6.0 : publication logicielle
 
 Objectif :
 
 ```text
-Permettre une utilisation serveur.
+Préparer une soumission logicielle descriptive.
 ```
 
 Ajouts :
 
-- backend PostgreSQL;
-- configuration par variables d’environnement;
-- guide de déploiement.
+- release Zenodo;
+- DOI dans les fichiers de citation;
+- papier révisé;
+- guide enseignant stabilisé;
+- limites et prérequis clairement documentés.
 
-## Version 0.7.0 : rapports pédagogiques
+## Version 0.7.0 : extensions pédagogiques
 
 Objectif :
 
 ```text
-Produire des analyses enseignant.
+Élargir les analyses pédagogiques sans prétendre à des effets non mesurés.
 ```
 
 Fonctions :
@@ -989,6 +1035,9 @@ summarise_questions()
 detect_difficult_questions()
 generate_teacher_report()
 ```
+
+Ces fonctions existent déjà en forme initiale. Cette étape viserait surtout
+leur consolidation, leur documentation et leur validation sur données pilotes.
 
 ## Version 1.0.0 : version stable
 
@@ -1078,4 +1127,3 @@ Peut-on créer une base propre, insérer des tentatives, relire les données et 
 ```
 
 Cela donne une base solide avant de s’attaquer à l’intégration avec `learnr` et `gradethis`.
-

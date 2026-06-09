@@ -6,10 +6,11 @@ for peer review.
 
 ## Current status
 
-`learnrTrackR` has a released `0.2.0` pilot kit and a development version
-`0.2.0.9000`. It includes SQLite tracking, optional PostgreSQL deployment
-rehearsal, tracked `learnr` examples, teacher exports, Moodle-ready CSV files,
-dashboard launchers, privacy utilities, and a realistic course pilot example.
+`learnrTrackR` has a `0.3.0` pilot-ready release. It includes SQLite tracking,
+optional PostgreSQL deployment rehearsal, tracked `learnr` examples, teacher
+exports, Moodle-ready and Canvas Gradebook CSV files, dashboard launchers,
+privacy utilities, a realistic course pilot example, and a first Open Journals
+style paper draft.
 
 The package is not yet supported by an empirical teaching evaluation. It should
 therefore be presented first as educational software or research software, not
@@ -43,6 +44,9 @@ https://journal.r-project.org/
 - [x] Add an instructor adoption vignette for external teachers.
 - [x] Add a controlled pilot protocol in
   `inst/examples/course-pilot/pilot-protocol.md`.
+- [x] Add a post-pilot record template in
+  `inst/examples/course-pilot/pilot-record-template.md`.
+- [x] Prepare a first descriptive `paper.md` draft in `paper/`.
 - [ ] Archive a tagged release with Zenodo after enabling the GitHub
   integration.
 - [ ] Add the resulting DOI to `CITATION.cff`, `.zenodo.json`, `README.md`, and
@@ -50,17 +54,18 @@ https://journal.r-project.org/
 - [ ] Run a small controlled pilot with a real or semi-real tutorial section.
 - [ ] Record the pilot protocol, privacy decisions, deployment context, and
   known limitations after the pilot.
-- [ ] Prepare a short paper with problem statement, design goals, package
-  architecture, example workflow, reproducibility notes, limitations, and
-  future work.
+- [ ] Revise the short paper after the pilot with documented workflow evidence,
+  known limitations, and updated references.
 - [ ] Keep all claims descriptive unless they are supported by collected data
   and an appropriate evaluation design.
 
 ## Next publication increment
 
-The next useful publication-oriented increment is a first `paper.md` draft in
-Open Journals style. It should describe the software and adoption workflow
-without claiming learning gains.
+The next useful publication-oriented increment is a small controlled pilot
+using the course-pilot protocol. The result should be recorded with
+`inst/examples/course-pilot/pilot-record-template.md`. The paper should then be
+revised with descriptive workflow evidence while avoiding unsupported learning
+claims.
 
 ## Evidence to avoid claiming without data
 

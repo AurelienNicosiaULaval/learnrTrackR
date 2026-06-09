@@ -1,14 +1,15 @@
 # learnrTrackR
 
-`learnrTrackR` is an early-stage R package for tracking simulated tutorial
-attempts in a local SQLite database.
+`learnrTrackR` is an early-stage R package for tracking `learnr`-style tutorial
+attempts in SQLite or PostgreSQL.
 
 The long-term goal is to provide a light, open, reproducible layer for storing
 answers, attempts, grading results, scores, and exports from interactive
 teaching workflows built around `learnr`-style tutorials.
 
-This first version is intentionally small. It validates the database layer
-while keeping `learnr`, `gradethis`, Moodle, and Shiny integration minimal.
+The current pilot-ready version validates a complete controlled teaching
+workflow while keeping `learnr`, `gradethis`, LMS, and dashboard integration
+explicit and inspectable.
 
 ## Problem
 
@@ -419,16 +420,17 @@ generate_teacher_report(con, "teacher-report.html", "module_01")
 These helpers use the same scoring rules as `gradebook()` and can be filtered
 by registered group.
 
-## Short roadmap after 0.2.0
+## Short roadmap after 0.3.0
 
-1. Rehearse the course pilot with the instructor adoption guide and pilot
-   protocol.
+1. Run a small controlled pilot with the course-pilot protocol and record the
+   result with `inst/examples/course-pilot/pilot-record-template.md`.
 2. Decide the institutional student identifier, authentication boundary, and
    data-retention period outside the package.
 3. Add stricter operational checks for duplicate learners, missing questions,
-   and unexpected Moodle export rows.
+   and unexpected LMS export rows.
 4. Add a deployment guide for a managed Shiny or Posit Connect environment.
-5. Prepare a `0.3.0` release focused on production deployment hardening.
+5. Revise `paper/paper.md` with descriptive pilot evidence, while avoiding
+   unsupported claims about learning gains.
 
 ## Minimal learnr prototype
 

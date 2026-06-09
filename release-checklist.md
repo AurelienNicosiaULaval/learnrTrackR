@@ -35,6 +35,8 @@ Avant de créer un tag:
 4. Vérifier que `privacy.md` et les vignettes sont cohérents.
 5. Vérifier que les tests PostgreSQL réels sont sautés ou exécutés avec une
    base jetable.
+6. Pour une version pilote, vérifier que `publication-plan.md`, `paper/` et les
+   gabarits de pilotage sont cohérents avec la version publiée.
 
 ## GitHub
 
@@ -65,6 +67,19 @@ release. Le workflow `pkgdown` construit le site et le publie avec GitHub Pages.
 
 Pour le site pkgdown, configurer GitHub Pages avec la source `GitHub Actions`
 dans les paramètres du dépôt.
+
+## Publication pilote
+
+Avant de décrire la version comme prête pour un pilote:
+
+1. Vérifier que `inst/examples/course-pilot/pilot-protocol.md` décrit le
+   protocole prévu.
+2. Vérifier que `inst/examples/course-pilot/pilot-record-template.md` peut être
+   rempli sans publier de données étudiantes.
+3. Vérifier que `paper/paper.md` reste descriptif et ne revendique aucun gain
+   d'apprentissage sans données.
+4. Vérifier que le DOI Zenodo n'est ajouté qu'après l'archivage réel d'une
+   release taguée.
 
 ## Site pkgdown local
 

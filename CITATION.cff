@@ -1,7 +1,7 @@
 cff-version: 1.2.0
 message: "If you use learnrTrackR, please cite it as below."
-title: "learnrTrackR: Track Simulated learnr Tutorial Attempts"
-version: 0.2.0.9000
+title: "learnrTrackR: Track learnr-Style Tutorial Attempts"
+version: "0.3.0"
 authors:
   - family-names: Nicosia
     given-names: Aurélien
