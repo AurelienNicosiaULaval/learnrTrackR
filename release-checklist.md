@@ -25,6 +25,11 @@ Vérifier aussi les fichiers non suivis:
 git status --short
 ```
 
+Si `git status`, `git log` ou `R CMD build` bloque dans le checkout local,
+valider depuis une copie propre hors de l'arborescence de travail, par exemple
+dans `/tmp`, en excluant `.git`, `docs/`, `doc/`, `Meta/`, les dossiers
+`*.Rcheck`, les archives `*.tar.gz` et les fichiers `.DS_Store`.
+
 ## Version
 
 Avant de créer un tag:

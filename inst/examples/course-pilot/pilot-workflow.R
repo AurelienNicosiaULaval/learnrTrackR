@@ -117,6 +117,12 @@ course_pilot_teacher_outputs <- function(con,
     group_id = group_filter,
     rule = rule
   )
+  readiness <- learnrTrackR::check_pilot_readiness(
+    con,
+    tutorial_id = tutorial_id,
+    group_id = group_filter,
+    rule = rule
+  )
   report <- learnrTrackR::teacher_report_data(
     con,
     tutorial_id = tutorial_id,
@@ -127,6 +133,7 @@ course_pilot_teacher_outputs <- function(con,
   attempts_path <- file.path(output_dir, "course-pilot-attempts.csv")
   scores_path <- file.path(output_dir, "course-pilot-scores.csv")
   gradebook_path <- file.path(output_dir, "course-pilot-gradebook.csv")
+  readiness_path <- file.path(output_dir, "course-pilot-readiness.csv")
   moodle_path <- file.path(output_dir, "course-pilot-moodle.csv")
   canvas_path <- file.path(output_dir, "course-pilot-canvas.csv")
   bundle_dir <- file.path(output_dir, "course-pilot-bundle")
@@ -135,6 +142,7 @@ course_pilot_teacher_outputs <- function(con,
   learnrTrackR::export_results(con, attempts_path, type = "attempts", tutorial_id = tutorial_id)
   learnrTrackR::export_results(con, scores_path, type = "scores", tutorial_id = tutorial_id)
   learnrTrackR::export_results(con, gradebook_path, type = "gradebook", tutorial_id = tutorial_id)
+  readr::write_csv(readiness, readiness_path)
   learnrTrackR::export_moodle_grades(
     con,
     moodle_path,
@@ -174,12 +182,14 @@ course_pilot_teacher_outputs <- function(con,
       scores = scores,
       gradebook = grades,
       dashboard = dashboard,
+      readiness = readiness,
       report = report,
       bundle_paths = bundle_paths,
       paths = list(
         attempts = attempts_path,
         scores = scores_path,
         gradebook = gradebook_path,
+        readiness = readiness_path,
         moodle = moodle_path,
         canvas = canvas_path,
         bundle = bundle_dir,

@@ -49,6 +49,7 @@ reference:
   contents:
   - compute_scores
   - gradebook
+  - check_pilot_readiness
   - export_results
   - moodle_grades
   - export_moodle_grades

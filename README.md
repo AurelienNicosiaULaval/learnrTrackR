@@ -17,10 +17,11 @@ Interactive tutorials are useful for teaching R and statistics, but instructors
 also need reliable records of what students submitted, how many times they
 tried, what feedback was returned, and what score should be exported.
 
-This package starts with the simplest useful layer: a local database that can
-store simulated attempts and export results for inspection.
+The package now supports a controlled pilot workflow: local or server-backed
+tracking, explicit tutorial instrumentation, teacher inspection outputs, and
+LMS-oriented CSV exports.
 
-## What the MVP does
+## Current pilot-ready scope
 
 - Create a SQLite tracking database.
 - Create the required schema.
@@ -46,7 +47,7 @@ store simulated attempts and export results for inspection.
 - Provide a course pilot example with CSV configuration, simulated learner
   results, Moodle export, and teacher report generation.
 
-## What the MVP does not do yet
+## Current limits before stable use
 
 - It does not automatically instrument arbitrary `learnr` tutorials.
 - It does not capture `gradethis` checks unless the tracking helper is called
@@ -57,6 +58,8 @@ store simulated attempts and export results for inspection.
 - It does not verify real student identity beyond optional local registry
   checks.
 - It is not designed yet for high-concurrency production use.
+- It is a controlled pilot release, not an institutional authentication,
+  retention, or production deployment layer.
 
 ## Installation during development
 
@@ -268,6 +271,10 @@ inst/examples/course-pilot/config-csv/
 inst/examples/course-pilot/config/tracking.yml
 ```
 
+In these configuration files, the `version` field records the version of the
+tutorial content used for the pilot. It is independent from the package release
+version and should be updated only when the tutorial content changes.
+
 To create simulated pilot results:
 
 ```r
@@ -414,6 +421,7 @@ summarise_questions(con, "module_01")
 summarise_students(con, "module_01")
 detect_difficult_questions(con, "module_01")
 detect_stalled_students(con, "module_01")
+check_pilot_readiness(con, "module_01")
 generate_teacher_report(con, "teacher-report.html", "module_01")
 ```
 

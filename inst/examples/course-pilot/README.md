@@ -43,6 +43,11 @@ course-pilot/
 `config-csv/` is used by the launch scripts. `config/tracking.yml` is the same
 pilot configuration in a compact single-file format.
 
+The `version` field in `config-csv/tutorials.csv` and `config/tracking.yml`
+identifies the tutorial content used for this pilot configuration. It is not the
+package version. Update it when the tutorial content changes, not automatically
+when `learnrTrackR` is released.
+
 ## Student launch script
 
 For a student-style launch:
@@ -126,6 +131,7 @@ The script writes:
 - attempts CSV;
 - scores CSV;
 - gradebook CSV;
+- readiness checks CSV;
 - Moodle-ready CSV;
 - Canvas Gradebook CSV;
 - rich export bundle;
