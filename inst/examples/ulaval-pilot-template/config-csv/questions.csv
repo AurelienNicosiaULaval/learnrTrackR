@@ -1,0 +1,5 @@
+tutorial_id,question_id,question_label,question_type,max_score
+pilot_tutorial_01,q1_variable_type,Identify a variable type,radio,1
+pilot_tutorial_01,q2_summary_choice,Select appropriate summaries,checkbox,1
+pilot_tutorial_01,q3_mean_value,Compute a mean,numeric,1
+pilot_tutorial_01,q4_code_summary,Write a summary pipeline,code,2

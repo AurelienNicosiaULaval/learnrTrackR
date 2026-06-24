@@ -1,0 +1,47 @@
+courses:
+  - course_id: stat_pilot
+    course_label: Statistics pilot template
+    semester: pilot
+tutorials:
+  - tutorial_id: pilot_tutorial_01
+    course_id: stat_pilot
+    tutorial_label: Pilot tutorial dry-run
+    version: 0.1.0
+students:
+  - student_id: student_demo
+    student_label: Demo learner
+    email: ""
+    group_id: A
+  - student_id: student_alpha
+    student_label: Student Alpha
+    email: ""
+    group_id: A
+  - student_id: student_beta
+    student_label: Student Beta
+    email: ""
+    group_id: A
+  - student_id: student_gamma
+    student_label: Student Gamma
+    email: ""
+    group_id: B
+questions:
+  - tutorial_id: pilot_tutorial_01
+    question_id: q1_variable_type
+    question_label: Identify a variable type
+    question_type: radio
+    max_score: 1
+  - tutorial_id: pilot_tutorial_01
+    question_id: q2_summary_choice
+    question_label: Select appropriate summaries
+    question_type: checkbox
+    max_score: 1
+  - tutorial_id: pilot_tutorial_01
+    question_id: q3_mean_value
+    question_label: Compute a mean
+    question_type: numeric
+    max_score: 1
+  - tutorial_id: pilot_tutorial_01
+    question_id: q4_code_summary
+    question_label: Write a summary pipeline
+    question_type: code
+    max_score: 2

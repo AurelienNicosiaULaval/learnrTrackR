@@ -319,6 +319,17 @@ Before a real controlled pilot, read
 `inst/examples/course-pilot/pilot-checklist.md` and
 `inst/examples/course-pilot/pilot-protocol.md`.
 
+For a lighter pre-course rehearsal with only fictional learners, use the
+installed dry-run template:
+
+```r
+source("inst/examples/ulaval-pilot-template/run-dry-run.R")
+```
+
+It writes readiness checks, scoped attempts, scores, gradebook rows,
+Moodle-ready grades, Canvas Gradebook grades, and a rich export bundle for the
+fictional group A cohort.
+
 For an adoption-oriented guide written from the perspective of an external
 teacher, see:
 
